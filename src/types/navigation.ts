@@ -23,5 +23,8 @@ export type RootStackParamList = {
     AdminDashboard: undefined;
     DoctorDashboard: undefined;
     PatientDashboard: undefined;
-    UserManagement: undefined;
+    Sensors: undefined;
+    SensorDetail: { sensorId: string };
+    AccountSettings: undefined;
+    DrawerNavigator: undefined;
 };
