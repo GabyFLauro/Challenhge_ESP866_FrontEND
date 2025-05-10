@@ -17,10 +17,7 @@ export const Logo = () => {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 1,
+    marginLeft: 10,
   },
   circleContainer: {
     width: 60,

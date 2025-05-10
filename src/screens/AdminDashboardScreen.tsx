@@ -115,10 +115,8 @@ const AdminDashboardScreen: React.FC = () => {
 
     return (
         <Container>
-            <Header />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <Title>Painel Administrativo</Title>
-
                 <Button
                     title="Gerenciar Usuários"
                     onPress={() => navigation.navigate('UserManagement')}

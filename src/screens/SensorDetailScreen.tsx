@@ -2,37 +2,62 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../components/Logo';
-import { LineChart } from 'react-native-chart-kit';
+import { LineChart, BarChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 
 // Mock data for sensor values
 const generateMockData = (status: 'ok' | 'warning' | 'error') => {
   const baseValue = status === 'ok' ? 50 : status === 'warning' ? 75 : 90;
-  return Array.from({ length: 10 }, (_, i) => ({
+  return Array.from({ length: 8 }, (_, i) => ({
     timestamp: new Date(Date.now() - i * 60000).toLocaleTimeString(),
     value: baseValue + (Math.random() * 10 - 5),
   }));
 };
 
-// Configurações do gráfico
-const chartConfig = {
+// Configurações do gráfico de linha
+const lineChartConfig = {
   backgroundColor: '#1C1C1E',
   backgroundGradientFrom: '#1C1C1E',
   backgroundGradientTo: '#1C1C1E',
-  decimalPlaces: 2,
+  decimalPlaces: 1,
   color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
   labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
   style: {
     borderRadius: 16,
   },
   propsForDots: {
-    r: '6',
+    r: '4',
     strokeWidth: '2',
     stroke: '#007AFF',
+  },
+  propsForLabels: {
+    fontSize: 10,
+  },
+};
+
+// Configurações do gráfico de barras
+const barChartConfig = {
+  backgroundColor: '#1C1C1E',
+  backgroundGradientFrom: '#1C1C1E',
+  backgroundGradientTo: '#1C1C1E',
+  decimalPlaces: 1,
+  color: (opacity = 1) => `rgba(255, 193, 7, ${opacity})`,
+  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+  style: {
+    borderRadius: 16,
+  },
+  barPercentage: 0.4,
+  propsForLabels: {
+    fontSize: 10,
+  },
+  propsForBackgroundLines: {
+    strokeDasharray: '',
   },
 };
 
 const screenWidth = Dimensions.get('window').width;
+const chartWidth = screenWidth - 32;
+const chartHeight = 180;
 
 export const SensorDetailScreen = () => {
   const route = useRoute();
@@ -99,7 +124,7 @@ export const SensorDetailScreen = () => {
     }
   };
 
-  // Preparar dados para o gráfico
+  // Preparar dados para os gráficos
   const chartData = {
     labels: sensorData.map(data => data.timestamp.split(':').slice(0, 2).join(':')),
     datasets: [
@@ -107,6 +132,15 @@ export const SensorDetailScreen = () => {
         data: sensorData.map(data => data.value),
         color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
         strokeWidth: 2,
+      },
+    ],
+  };
+
+  const barChartData = {
+    labels: sensorData.map(data => data.timestamp.split(':').slice(0, 2).join(':')),
+    datasets: [
+      {
+        data: sensorData.map(data => Number(data.value.toFixed(1))),
       },
     ],
   };
@@ -139,14 +173,37 @@ export const SensorDetailScreen = () => {
       </View>
 
       <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Gráfico de Valores</Text>
+        <Text style={styles.chartTitle}>Gráfico de Linha</Text>
         <LineChart
           data={chartData}
-          width={screenWidth - 32}
-          height={220}
-          chartConfig={chartConfig}
+          width={chartWidth}
+          height={chartHeight}
+          chartConfig={lineChartConfig}
           bezier
           style={styles.chart}
+          withInnerLines={false}
+          withOuterLines={false}
+          withVerticalLines={false}
+          withHorizontalLines={true}
+          withDots={true}
+          segments={4}
+        />
+      </View>
+
+      <View style={styles.chartContainer}>
+        <Text style={styles.chartTitle}>Gráfico de Barras</Text>
+        <BarChart
+          data={barChartData}
+          width={chartWidth}
+          height={chartHeight}
+          chartConfig={barChartConfig}
+          style={styles.chart}
+          showValuesOnTopOfBars
+          yAxisLabel=""
+          yAxisSuffix=""
+          segments={4}
+          fromZero
+          verticalLabelRotation={-15}
         />
       </View>
 

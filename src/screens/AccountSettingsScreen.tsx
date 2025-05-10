@@ -69,8 +69,10 @@ export const AccountSettingsScreen = () => {
 
   return (
     <ScrollView style={styles.container}>
-      <Logo />
-      <Text style={styles.title}>Configurações da Conta</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Configurações da Conta</Text>
+        <Logo />
+      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informações Pessoais</Text>
@@ -143,12 +145,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
     padding: 16,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
     color: '#FFFFFF',
+    flex: 1,
   },
   section: {
     backgroundColor: '#1C1C1E',

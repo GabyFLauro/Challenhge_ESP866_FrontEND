@@ -79,7 +79,7 @@ const DrawerNavigator = () => {
           name="AdminDashboard"
           component={AdminDashboardScreen}
           options={{
-            title: 'Painel Admin',
+            title: 'Painel',
             drawerIcon: ({ color, size }) => (
               <Ionicons name="shield-outline" size={size} color={color} />
             ),

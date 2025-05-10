@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { Text, Button } from 'react-native-elements';
+import { Text } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/navigation';
@@ -19,7 +19,6 @@ interface Sensor {
 
 export const SensorsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
-    const { signOut } = useAuth();
     const [sensors] = useState<Sensor[]>([
         { id: '1', name: 'Sensor de Proximidade Magnético', status: 'ok', lastUpdate: '2024-02-20 10:30' },
         { id: '2', name: 'Encoder Linear', status: 'error', lastUpdate: '2024-02-20 10:25' },
@@ -30,14 +29,6 @@ export const SensorsScreen = () => {
         { id: '7', name: 'Sensor de Vibração', status: 'error', lastUpdate: '2024-02-20 10:00' },
         { id: '8', name: 'Sensor de Temperatura', status: 'ok', lastUpdate: '2024-02-20 09:55' },
     ]);
-
-    const handleLogout = async () => {
-        try {
-            await signOut();
-        } catch (error) {
-            console.error('Erro ao fazer logout:', error);
-        }
-    };
 
     const getStatusColor = (status: Sensor['status']) => {
         switch (status) {
@@ -70,12 +61,6 @@ export const SensorsScreen = () => {
             <Logo />
             <View style={styles.header}>
                 <Text h4 style={styles.title}>Sensores Disponíveis</Text>
-                <Button
-                    title="Sair"
-                    onPress={handleLogout}
-                    buttonStyle={styles.logoutButton}
-                    containerStyle={styles.logoutButtonContainer}
-                />
             </View>
             <ScrollView style={styles.scrollView}>
                 {sensors.map((sensor) => (
@@ -121,13 +106,6 @@ const styles = StyleSheet.create({
     title: {
         color: '#FFFFFF',
         flex: 1,
-    },
-    logoutButton: {
-        backgroundColor: '#007AFF',
-        paddingHorizontal: 20,
-    },
-    logoutButtonContainer: {
-        marginLeft: 10,
     },
     scrollView: {
         flex: 1,
