@@ -27,4 +27,5 @@ export type RootStackParamList = {
     SensorDetail: { sensorId: string };
     AccountSettings: undefined;
     DrawerNavigator: undefined;
+    UserManagement: undefined;
 };

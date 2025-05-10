@@ -19,6 +19,7 @@ import RegisterScreen from '../screens/RegisterScreen';
 import { SensorsScreen } from '../screens/SensorsScreen';
 import { SensorDetailScreen } from '../screens/SensorDetailScreen';
 import { AccountSettingsScreen } from '../screens/AccountSettingsScreen';
+import UserManagementScreen from '../screens/UserManagementScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator();
@@ -160,6 +161,18 @@ export const AppNavigator: React.FC = () => {
                             component={SensorDetailScreen}
                             options={{ 
                                 title: 'Detalhes do Sensor',
+                                headerShown: true,
+                                headerStyle: {
+                                    backgroundColor: '#1C1C1E',
+                                },
+                                headerTintColor: '#FFFFFF',
+                            }}
+                        />
+                        <Stack.Screen
+                            name="UserManagement"
+                            component={UserManagementScreen}
+                            options={{
+                                title: 'Gerenciar Usuários',
                                 headerShown: true,
                                 headerStyle: {
                                     backgroundColor: '#1C1C1E',

@@ -9,32 +9,7 @@ const STORAGE_KEYS = {
 };
 
 // Médicos mockados que podem fazer login
-const mockDoctors = [
-    {
-        id: '1',
-        name: 'Dr. João Silva',
-        email: 'joao@example.com',
-        role: 'doctor' as const,
-        specialty: 'Cardiologia',
-        image: 'https://randomuser.me/api/portraits/men/1.jpg',
-    },
-    {
-        id: '2',
-        name: 'Dra. Maria Santos',
-        email: 'maria@example.com',
-        role: 'doctor' as const,
-        specialty: 'Pediatria',
-        image: 'https://randomuser.me/api/portraits/women/1.jpg',
-    },
-    {
-        id: '3',
-        name: 'Dr. Pedro Oliveira',
-        email: 'pedro@example.com',
-        role: 'doctor' as const,
-        specialty: 'Ortopedia',
-        image: 'https://randomuser.me/api/portraits/men/2.jpg',
-    },
-];
+const mockDoctors: any[] = [];
 
 // Admin mockado
 const mockAdmin = {
@@ -75,11 +50,37 @@ export const authService = {
             };
         }
 
+        // Verifica se é um usuário registrado
+        const found = registeredUsers.find(u => u.email === credentials.email && u.password === credentials.password);
+        if (found) {
+            // Retorna o usuário registrado como "Usuário Comum"
+            const { password, ...user } = found;
+            return {
+                user: { ...user, role: 'patient' },
+                token: 'user-token',
+            };
+        }
+
         throw new Error('Email ou senha inválidos');
     },
 
     async register(data: RegisterData): Promise<AuthResponse> {
-        throw new Error('Registro de novos usuários não está disponível');
+        // Cria um novo usuário comum
+        const newUser: User & { password: string } = {
+            id: Date.now().toString(),
+            name: data.name,
+            email: data.email,
+            role: 'patient',
+            image: '',
+            password: data.password,
+        };
+        registeredUsers.push(newUser);
+        await AsyncStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(registeredUsers));
+        const { password, ...user } = newUser;
+        return {
+            user,
+            token: 'user-token',
+        };
     },
 
     async signOut(): Promise<void> {
@@ -103,7 +104,12 @@ export const authService = {
 
     // Funções para o admin
     async getAllUsers(): Promise<User[]> {
-        return [...mockDoctors, ...registeredUsers];
+        // Retorna apenas admin, Fábio e os cadastrados
+        return [
+            mockAdmin,
+            mockUser,
+            ...registeredUsers.map(({ password, ...user }) => user)
+        ];
     },
 
     async getAllDoctors(): Promise<User[]> {
@@ -124,5 +130,19 @@ export const authService = {
         } catch (error) {
             console.error('Erro ao carregar usuários registrados:', error);
         }
+    },
+
+    async deleteRegisteredUser(userId: string): Promise<void> {
+        registeredUsers = registeredUsers.filter(u => u.id !== userId);
+        await AsyncStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(registeredUsers));
+    },
+
+    async editRegisteredUser(userId: string, newEmail: string, newPassword: string): Promise<void> {
+        registeredUsers = registeredUsers.map(u =>
+            u.id === userId
+                ? { ...u, email: newEmail, password: newPassword ? newPassword : u.password }
+                : u
+        );
+        await AsyncStorage.setItem(STORAGE_KEYS.REGISTERED_USERS, JSON.stringify(registeredUsers));
     },
 }; 
