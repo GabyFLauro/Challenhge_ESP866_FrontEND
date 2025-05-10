@@ -28,11 +28,12 @@ const LoginScreen: React.FC = () => {
         }
 
         setLoading(true);
+        setError('');
         try {
             await signIn({ email, password });
             navigation.navigate('Sensors');
         } catch (error) {
-            Alert.alert('Erro', 'Email ou senha inválidos');
+            setError('Email ou senha inválidos');
         } finally {
             setLoading(false);
         }
