@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../components/Logo';
-import { LineChart, BarChart } from 'react-native-chart-kit';
+import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
 import { Ionicons } from '@expo/vector-icons';
 
-// Mock data for sensor values
+// Função auxiliar para cores RGBA
+const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
+
+// Mock data para simulação
 const generateMockData = (status: 'ok' | 'warning' | 'error') => {
   const baseValue = status === 'ok' ? 50 : status === 'warning' ? 75 : 90;
   return Array.from({ length: 8 }, (_, i) => ({
@@ -14,16 +17,23 @@ const generateMockData = (status: 'ok' | 'warning' | 'error') => {
   }));
 };
 
-// Configurações do gráfico de linha
-const lineChartConfig = {
+// Calcular tamanho responsivo do gráfico
+const getChartDimensions = (screenWidth: number) => {
+  const width = screenWidth - 50; // Diminuir o tamanho do gráfico (antes estava com padding horizontal de 32px, agora 64px)
+  const height = width * 0.75; // Reduzir altura do gráfico para 50% da largura
+  const fontSize = Math.max(8, Math.floor(width / 40));
+  return { width, height, fontSize };
+};
+
+const getLineChartConfig = (fontSize: number) => ({
   backgroundColor: '#1C1C1E',
   backgroundGradientFrom: '#1C1C1E',
   backgroundGradientTo: '#1C1C1E',
   decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+  color: (opacity = 1) => rgba(0, 122, 255, opacity),
+  labelColor: (opacity = 1) => rgba(255, 255, 255, opacity),
   style: {
-    borderRadius: 16,
+    borderRadius: 1,
   },
   propsForDots: {
     r: '4',
@@ -31,47 +41,24 @@ const lineChartConfig = {
     stroke: '#007AFF',
   },
   propsForLabels: {
-    fontSize: 10,
+    fontSize,
   },
-};
-
-// Configurações do gráfico de barras
-const barChartConfig = {
-  backgroundColor: '#1C1C1E',
-  backgroundGradientFrom: '#1C1C1E',
-  backgroundGradientTo: '#1C1C1E',
-  decimalPlaces: 1,
-  color: (opacity = 1) => `rgba(255, 193, 7, ${opacity})`,
-  labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-  style: {
-    borderRadius: 16,
-  },
-  barPercentage: 0.4,
-  propsForLabels: {
-    fontSize: 10,
-  },
-  propsForBackgroundLines: {
-    strokeDasharray: '',
-  },
-};
-
-const screenWidth = Dimensions.get('window').width;
-const chartWidth = screenWidth - 32;
-const chartHeight = 180;
+});
 
 export const SensorDetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
   const { sensorId } = route.params as { sensorId: string };
+  const { width: screenWidth } = useWindowDimensions();
+  const { width: chartWidth, height: chartHeight, fontSize: chartFontSize } = getChartDimensions(screenWidth);
 
-  // Determine sensor status based on ID
   const getSensorStatus = (id: string): 'ok' | 'warning' | 'error' => {
     switch (id) {
-      case '2': // Encoder Linear
+      case '2':
         return 'error';
-      case '3': // Sensor de Pressão
+      case '3':
         return 'warning';
-      case '7': // Sensor de Vibração
+      case '7':
         return 'error';
       default:
         return 'ok';
@@ -124,44 +111,53 @@ export const SensorDetailScreen = () => {
     }
   };
 
-  // Preparar dados para os gráficos
   const chartData = {
     labels: sensorData.map(data => data.timestamp.split(':').slice(0, 2).join(':')),
     datasets: [
       {
         data: sensorData.map(data => data.value),
-        color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+        color: (opacity = 1) => rgba(0, 122, 255, opacity),
         strokeWidth: 2,
       },
     ],
   };
 
-  const barChartData = {
-    labels: sensorData.map(data => data.timestamp.split(':').slice(0, 2).join(':')),
-    datasets: [
-      {
-        data: sensorData.map(data => Number(data.value.toFixed(1))),
-      },
-    ],
-  };
+  const getSensorName = (id: string): string => {
+    switch (id) {
+      case '1':
+        return 'Sensor de Temperatura';
+      case '2':
+        return 'Sensor de Umidade';
+      case '3':
+        return 'Sensor de Gás';
+      case '4':
+        return 'Sensor de Fumaça';
+      case '5':
+        return 'Sensor de Luminosidade';
+      case '6':
+        return 'Sensor de Movimento';
+      case '7':
+        return 'Sensor de Chamas';
+      default:
+        return 'Sensor Desconhecido';
+    }
+  };  
 
   return (
     <ScrollView style={styles.container}>
       <Logo />
-      <Text style={styles.title}>{sensorId}</Text>
-      
+      <Text style={styles.title}>{getSensorName(sensorId)}</Text>
+
       <View style={styles.statusContainer}>
         <Text style={styles.statusLabel}>Status:</Text>
         <View style={styles.statusValueContainer}>
-          <Ionicons 
-            name={getStatusIcon(status)} 
-            size={24} 
-            color={getStatusColor(status)} 
+          <Ionicons
+            name={getStatusIcon(status)}
+            size={24}
+            color={getStatusColor(status)}
             style={styles.statusIcon}
           />
-          <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>
-            {getStatusText(status)}
-          </Text>
+          <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>{getStatusText(status)}</Text>
         </View>
       </View>
 
@@ -178,7 +174,7 @@ export const SensorDetailScreen = () => {
           data={chartData}
           width={chartWidth}
           height={chartHeight}
-          chartConfig={lineChartConfig}
+          chartConfig={getLineChartConfig(chartFontSize)}
           bezier
           style={styles.chart}
           withInnerLines={false}
@@ -187,23 +183,6 @@ export const SensorDetailScreen = () => {
           withHorizontalLines={true}
           withDots={true}
           segments={4}
-        />
-      </View>
-
-      <View style={styles.chartContainer}>
-        <Text style={styles.chartTitle}>Gráfico de Barras</Text>
-        <BarChart
-          data={barChartData}
-          width={chartWidth}
-          height={chartHeight}
-          chartConfig={barChartConfig}
-          style={styles.chart}
-          showValuesOnTopOfBars
-          yAxisLabel=""
-          yAxisSuffix=""
-          segments={4}
-          fromZero
-          verticalLabelRotation={-15}
         />
       </View>
 
@@ -263,11 +242,6 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   currentValueLabel: {
     fontSize: 16,
@@ -283,11 +257,8 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
     marginBottom: 20,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    justifyContent: 'flex-start',
+    alignItems: 'center',
   },
   chartTitle: {
     fontSize: 18,
@@ -303,11 +274,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     padding: 16,
     borderRadius: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   historyTitle: {
     fontSize: 18,
@@ -338,4 +304,4 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-}); 
+});
