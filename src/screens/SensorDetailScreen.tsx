@@ -125,19 +125,21 @@ export const SensorDetailScreen = () => {
   const getSensorName = (id: string): string => {
     switch (id) {
       case '1':
-        return 'Sensor de Temperatura';
+        return 'Sensor de Proximidade Magnético';
       case '2':
-        return 'Sensor de Umidade';
+        return 'Encoder Linear';
       case '3':
-        return 'Sensor de Gás';
+        return 'Sensor de Pressão';
       case '4':
-        return 'Sensor de Fumaça';
+        return 'Fluxômetro de Ar';
       case '5':
-        return 'Sensor de Luminosidade';
+        return 'Contador de Ciclos';
       case '6':
-        return 'Sensor de Movimento';
+        return 'Sensor de Tempo';
       case '7':
-        return 'Sensor de Chamas';
+        return 'Sensor de Vibração';
+      case '8':
+        return 'Sensor de Temperatura';
       default:
         return 'Sensor Desconhecido';
     }
