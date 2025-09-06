@@ -1,0 +1,6 @@
+export interface Sensor {
+    id: string;
+    name: string;
+    status: 'ok' | 'warning' | 'error';
+    lastUpdate: string;
+}

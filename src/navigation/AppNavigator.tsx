@@ -9,12 +9,8 @@ import { View } from 'react-native';
 
 // Screens
 import AdminDashboardScreen from '../screens/AdminDashboardScreen';
-import CreateAppointmentScreen from '../screens/CreateAppointmentScreen';
 import DoctorDashboardScreen from '../screens/DoctorDashboardScreen';
-import HomeScreen from '../screens/HomeScreen';
 import LoginScreen from '../screens/LoginScreen';
-import PatientDashboardScreen from '../screens/PatientDashboardScreen';
-import ProfileScreen from '../screens/ProfileScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import { SensorsScreen } from '../screens/SensorsScreen';
 import { SensorDetailScreen } from '../screens/SensorDetailScreen';

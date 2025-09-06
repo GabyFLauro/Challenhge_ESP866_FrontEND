@@ -12,6 +12,7 @@ interface ApiUser {
 
 // Interface para usuário no frontend
 export interface AdminUser {
+  image: string | undefined;
   id: string;
   name: string;
   email: string;
@@ -90,15 +91,34 @@ export const adminApiService = {
 
     switch (apiUser.tipoUsuario) {
       case 'ADMIN':
-        return { ...baseUser, role: 'admin' as const };
+        return {
+  ...baseUser, role: 'admin' as const,
+  image: undefined,
+  id: '',
+  name: '',
+  email: '',
+  role: 'admin'
+};
       case 'MEDICO':
-        return { 
-          ...baseUser, 
-          role: 'doctor' as const, 
-          specialty: apiUser.especialidade || 'Especialidade não informada' 
-        };
+        return {
+  ...baseUser,
+  role: 'doctor' as const,
+  specialty: apiUser.especialidade || 'Especialidade não informada',
+  image: undefined,
+  id: '',
+  name: '',
+  email: '',
+  role: 'admin'
+};
       case 'PACIENTE':
-        return { ...baseUser, role: 'patient' as const };
+        return {
+  ...baseUser, role: 'patient' as const,
+  image: undefined,
+  id: '',
+  name: '',
+  email: '',
+  role: 'admin'
+};
       default:
         throw new Error(`Tipo de usuário inválido: ${apiUser.tipoUsuario}`);
     }

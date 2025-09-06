@@ -5,11 +5,11 @@ import React, { useState } from 'react';
 import { ScrollView, TextStyle, ViewStyle, TouchableOpacity } from 'react-native';
 import { Button, ListItem, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
-import Header from '../components/Header';
-import UserManagement from '../components/UserManagement';
-import { useAuth } from '../contexts/AuthContext';
-import theme from '../styles/theme';
-import { RootStackParamList } from '../types/navigation';
+import Header from '../../components/Header';
+import UserManagement from '../../components/UserManagement';
+import { useAuth } from '../../contexts/AuthContext';
+import theme from '../../styles/theme';
+import { RootStackParamList } from '../../types/navigation';
 
 type AdminDashboardScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'AdminDashboard'>;

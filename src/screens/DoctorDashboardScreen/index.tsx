@@ -5,29 +5,17 @@ import React, { useState } from 'react';
 import { ScrollView, TextStyle, ViewStyle } from 'react-native';
 import { Button, ListItem } from 'react-native-elements';
 import styled from 'styled-components/native';
-import Header from '../components/Header';
-import { useAuth } from '../contexts/AuthContext';
-import theme from '../styles/theme';
-import { RootStackParamList } from '../types/navigation';
+import Header from '../../components/Header';
+import { useAuth } from '../../contexts/AuthContext';
+import theme from '../../styles/theme';
+import { RootStackParamList } from '../../types/navigation';
+import { styles } from './styles';
+import { Appointment } from './interfaces/appointments';
+import { StyledProps } from './interfaces/stylesprops';
 
 type DoctorDashboardScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'DoctorDashboard'>;
 };
-
-interface Appointment {
-    id: string;
-    patientId: string;
-    doctorId: string;
-    doctorName: string;
-    date: string;
-    time: string;
-    specialty: string;
-    status: 'pending' | 'confirmed' | 'cancelled';
-}
-
-interface StyledProps {
-    status: string;
-}
 
 const getStatusColor = (status: string) => {
     switch (status) {
@@ -159,41 +147,6 @@ const DoctorDashboardScreen: React.FC = () => {
             </ScrollView>
         </Container>
     );
-};
-
-const styles = {
-    scrollContent: {
-        padding: 20,
-    },
-    button: {
-        marginBottom: 20,
-        width: '100%',
-    },
-    buttonStyle: {
-        backgroundColor: theme.colors.primary,
-        paddingVertical: 12,
-    },
-    logoutButton: {
-        backgroundColor: theme.colors.error,
-        paddingVertical: 12,
-    },
-    actionButton: {
-        marginTop: 8,
-        width: '48%',
-    },
-    confirmButton: {
-        backgroundColor: theme.colors.success,
-        paddingVertical: 8,
-    },
-    cancelButton: {
-        backgroundColor: theme.colors.error,
-        paddingVertical: 8,
-    },
-    dateTime: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: theme.colors.text,
-    },
 };
 
 const Container = styled.View`

@@ -2,9 +2,10 @@ import React from 'react';
 import { ScrollView, ViewStyle } from 'react-native';
 import { Button } from 'react-native-elements';
 import styled from 'styled-components/native';
-import UserManagement from '../components/UserManagement';
-import { useAuth } from '../contexts/AuthContext';
-import theme from '../styles/theme';
+import UserManagement from '../../components/UserManagement';
+import { useAuth } from '../../contexts/AuthContext';
+import theme from '../../styles/theme';
+import { styles } from './styles';
 
 /**
  * Exemplo de tela que demonstra o uso do componente UserManagement
@@ -34,24 +35,6 @@ const UserManagementExample: React.FC = () => {
       </Footer>
     </Container>
   );
-};
-
-const styles = {
-  scrollView: {
-    flex: 1,
-  } as ViewStyle,
-  userManagement: {
-    flex: 1,
-  } as ViewStyle,
-  logoutButton: {
-    backgroundColor: theme.colors.error,
-    borderRadius: 8,
-    paddingVertical: 12,
-  },
-  logoutButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
 };
 
 // STYLED COMPONENTS

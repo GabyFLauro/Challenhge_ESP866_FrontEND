@@ -2,10 +2,11 @@ import React from 'react';
 import { ScrollView, ViewStyle } from 'react-native';
 import { Button } from 'react-native-elements';
 import styled from 'styled-components/native';
-import Header from '../components/Header';
-import UserManagement from '../components/UserManagement';
-import { useAuth } from '../contexts/AuthContext';
-import theme from '../styles/theme';
+import Header from '../../components/Header';
+import UserManagement from '../../components/UserManagement';
+import { useAuth } from '../../contexts/AuthContext';
+import theme from '../../styles/theme';
+import { styles } from './styles';
 
 const AdminDashboardWithUserManagement: React.FC = () => {
     const { signOut } = useAuth();
@@ -27,23 +28,6 @@ const AdminDashboardWithUserManagement: React.FC = () => {
             </ScrollView>
         </Container>
     );
-};
-
-const styles = {
-    scrollContent: {
-        padding: 20,
-    },
-    logoutButton: {
-        marginBottom: 20,
-        width: '100%',
-    },
-    logoutButtonStyle: {
-        backgroundColor: theme.colors.error,
-        paddingVertical: 12,
-    },
-    userManagement: {
-        flex: 1,
-    } as ViewStyle,
 };
 
 const Container = styled.View`

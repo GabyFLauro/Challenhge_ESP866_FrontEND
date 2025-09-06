@@ -4,10 +4,11 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
-import { useAuth } from '../contexts/AuthContext';
-import theme from '../styles/theme';
-import { RootStackParamList } from '../types/navigation';
-import { Logo } from '../components/Logo';
+import { useAuth } from '../../contexts/AuthContext';
+import theme from '../../styles/theme';
+import { RootStackParamList } from '../../types/navigation';
+import { Logo } from '../../components/Logo';
+import { styles } from './styles';
 
 type RegisterScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
@@ -137,54 +138,6 @@ const RegisterScreen: React.FC = () => {
         </ScrollView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#000000',
-    },
-    formContainer: {
-        flex: 1,
-        padding: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    title: {
-        color: '#FFFFFF',
-        textAlign: 'center',
-        marginBottom: 30,
-    },
-    input: {
-        marginBottom: 15,
-        width: '100%',
-    },
-    inputText: {
-        color: '#FFFFFF',
-    },
-    button: {
-        marginTop: 10,
-        width: '100%',
-    },
-    backButton: {
-        marginTop: 10,
-        width: '100%',
-    },
-    backButtonStyle: {
-        backgroundColor: '#2C2C2E',
-    },
-    errorText: {
-        color: '#FF3B30',
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-    userTypeLabel: {
-        color: '#FFFFFF',
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginBottom: 10,
-        alignSelf: 'flex-start',
-    },
-});
 
 // STYLED COMPONENTS
 
