@@ -2,10 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { ScrollView, TextStyle, ViewStyle } from 'react-native';
+import { ScrollView, TextStyle, ViewStyle, TouchableOpacity } from 'react-native';
 import { Button, ListItem, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
 import Header from '../components/Header';
+import UserManagement from '../components/UserManagement';
 import { useAuth } from '../contexts/AuthContext';
 import theme from '../styles/theme';
 import { RootStackParamList } from '../types/navigation';
@@ -64,6 +65,7 @@ const AdminDashboardScreen: React.FC = () => {
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<'appointments' | 'users'>('appointments');
 
     const loadData = async () => {
         try {
@@ -113,17 +115,90 @@ const AdminDashboardScreen: React.FC = () => {
         }
     };
 
+    const renderContent = () => {
+        if (activeTab === 'appointments') {
+            return (
+                <ScrollView contentContainerStyle={styles.scrollContent}>
+                    <Title>Consultas Agendadas</Title>
+                    
+                    {loading ? (
+                        <LoadingText>Carregando consultas...</LoadingText>
+                    ) : appointments.length === 0 ? (
+                        <EmptyText>Nenhuma consulta agendada</EmptyText>
+                    ) : (
+                        appointments.map((appointment) => (
+                            <AppointmentCard key={appointment.id}>
+                                <ListItem.Content>
+                                    <ListItem.Title style={styles.dateTime as TextStyle}>
+                                        {appointment.date} às {appointment.time}
+                                    </ListItem.Title>
+                                    <ListItem.Subtitle style={styles.doctorInfo}>
+                                        Dr(a). {appointment.doctorName} - {appointment.specialty}
+                                    </ListItem.Subtitle>
+                                    <StatusBadge status={appointment.status}>
+                                        <StatusText status={appointment.status}>
+                                            {getStatusText(appointment.status)}
+                                        </StatusText>
+                                    </StatusBadge>
+                                    {appointment.status === 'pending' && (
+                                        <ButtonContainer>
+                                            <Button
+                                                title="Confirmar"
+                                                onPress={() => handleUpdateStatus(appointment.id, 'confirmed')}
+                                                containerStyle={styles.actionButton as ViewStyle}
+                                                buttonStyle={styles.confirmButton}
+                                            />
+                                            <Button
+                                                title="Cancelar"
+                                                onPress={() => handleUpdateStatus(appointment.id, 'cancelled')}
+                                                containerStyle={styles.actionButton as ViewStyle}
+                                                buttonStyle={styles.cancelButton}
+                                            />
+                                        </ButtonContainer>
+                                    )}
+                                </ListItem.Content>
+                            </AppointmentCard>
+                        ))
+                    )}
+                </ScrollView>
+            );
+        } else {
+            return <UserManagement style={{ flex: 1 }} />;
+        }
+    };
+
     return (
         <Container>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Title>Painel Administrativo</Title>
-                <Button
-                    title="Gerenciar Usuários"
-                    onPress={() => navigation.navigate('UserManagement')}
-                    containerStyle={styles.button as ViewStyle}
-                    buttonStyle={styles.buttonStyle}
-                />
-            </ScrollView>
+            <Header />
+            <Title>Painel Administrativo</Title>
+            
+            <TabContainer>
+                <TabButton
+                    active={activeTab === 'appointments'}
+                    onPress={() => setActiveTab('appointments')}
+                >
+                    <TabButtonText active={activeTab === 'appointments'}>
+                        Consultas
+                    </TabButtonText>
+                </TabButton>
+                <TabButton
+                    active={activeTab === 'users'}
+                    onPress={() => setActiveTab('users')}
+                >
+                    <TabButtonText active={activeTab === 'users'}>
+                        Usuários
+                    </TabButtonText>
+                </TabButton>
+            </TabContainer>
+
+            {renderContent()}
+
+            <Button
+                title="Sair"
+                onPress={signOut}
+                containerStyle={styles.logoutButton as ViewStyle}
+                buttonStyle={styles.logoutButtonStyle}
+            />
         </Container>
     );
 };
@@ -138,6 +213,10 @@ const styles = {
     },
     buttonStyle: {
         backgroundColor: theme.colors.primary,
+        paddingVertical: 12,
+    },
+    logoutButton: {
+        backgroundColor: theme.colors.error,
         paddingVertical: 12,
     },
     actionButton: {
@@ -156,15 +235,93 @@ const styles = {
 
 const Container = styled.View`
   flex: 1;
-  background-color: #000000;
+  background-color: ${theme.colors.background};
 `;
 
 const Title = styled.Text`
   font-size: 24px;
   font-weight: bold;
-  color: #FFFFFF;
+  color: ${theme.colors.text};
   margin-bottom: 20px;
   text-align: center;
+  padding: 16px;
+`;
+
+const TabContainer = styled.View`
+  flex-direction: row;
+  background-color: ${theme.colors.white};
+  margin: 0 16px 16px 16px;
+  border-radius: 8px;
+  padding: 4px;
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.1;
+  shadow-radius: 4px;
+  elevation: 3;
+`;
+
+const TabButton = styled(TouchableOpacity)<{ active: boolean }>`
+  flex: 1;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: ${(props: { active: boolean }) => 
+    props.active ? theme.colors.primary : 'transparent'};
+  align-items: center;
+`;
+
+const TabButtonText = styled.Text<{ active: boolean }>`
+  font-size: 16px;
+  font-weight: bold;
+  color: ${(props: { active: boolean }) => 
+    props.active ? theme.colors.white : theme.colors.text};
+`;
+
+const AppointmentCard = styled(ListItem)`
+  background-color: ${theme.colors.white};
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-width: 1px;
+  border-color: ${theme.colors.border};
+  shadow-color: #000;
+  shadow-offset: 0px 2px;
+  shadow-opacity: 0.1;
+  shadow-radius: 4px;
+  elevation: 3;
+`;
+
+const LoadingText = styled.Text`
+  text-align: center;
+  color: ${theme.colors.text};
+  font-size: 16px;
+  margin-top: 20px;
+`;
+
+const EmptyText = styled.Text`
+  text-align: center;
+  color: ${theme.colors.text};
+  font-size: 16px;
+  margin-top: 20px;
+`;
+
+const StatusBadge = styled.View<StyledProps>`
+  background-color: ${(props: StyledProps) => getStatusColor(props.status) + '20'};
+  padding: 4px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-top: 8px;
+`;
+
+const StatusText = styled.Text<StyledProps>`
+  color: ${(props: StyledProps) => getStatusColor(props.status)};
+  font-size: 12px;
+  font-weight: 500;
+`;
+
+const ButtonContainer = styled.View`
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 8px;
 `;
 
 export default AdminDashboardScreen; 

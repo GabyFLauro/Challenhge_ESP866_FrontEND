@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +20,7 @@ const RegisterScreen: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [userType, setUserType] = useState<'PACIENTE' | 'ADMIN'>('PACIENTE');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -40,6 +41,7 @@ const RegisterScreen: React.FC = () => {
                 name,
                 email,
                 password,
+                userType,
             });
             Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
             navigation.navigate('Login');
@@ -95,6 +97,26 @@ const RegisterScreen: React.FC = () => {
                     inputStyle={styles.inputText}
                     placeholderTextColor="#8E8E93"
                 />
+
+                <Text style={styles.userTypeLabel}>Tipo de Usuário:</Text>
+                <UserTypeContainer>
+                    <UserTypeButton
+                        selected={userType === 'PACIENTE'}
+                        onPress={() => setUserType('PACIENTE')}
+                    >
+                        <UserTypeText selected={userType === 'PACIENTE'}>
+                            Paciente
+                        </UserTypeText>
+                    </UserTypeButton>
+                    <UserTypeButton
+                        selected={userType === 'ADMIN'}
+                        onPress={() => setUserType('ADMIN')}
+                    >
+                        <UserTypeText selected={userType === 'ADMIN'}>
+                            Administrador
+                        </UserTypeText>
+                    </UserTypeButton>
+                </UserTypeContainer>
 
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -155,6 +177,40 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 10,
     },
+    userTypeLabel: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        alignSelf: 'flex-start',
+    },
 });
+
+// STYLED COMPONENTS
+
+const UserTypeContainer = styled.View`
+  flex-direction: row;
+  width: 100%;
+  margin-bottom: 20px;
+  background-color: #2C2C2E;
+  border-radius: 8px;
+  padding: 4px;
+`;
+
+const UserTypeButton = styled(TouchableOpacity)<{ selected: boolean }>`
+  flex: 1;
+  padding: 12px;
+  border-radius: 6px;
+  background-color: ${(props: { selected: boolean }) => 
+    props.selected ? theme.colors.primary : 'transparent'};
+  align-items: center;
+`;
+
+const UserTypeText = styled.Text<{ selected: boolean }>`
+  font-size: 16px;
+  font-weight: bold;
+  color: ${(props: { selected: boolean }) => 
+    props.selected ? theme.colors.white : theme.colors.text};
+`;
 
 export default RegisterScreen;

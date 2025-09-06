@@ -3,15 +3,11 @@ import { ViewStyle } from 'react-native';
 import { Avatar, ListItem } from 'react-native-elements';
 import styled from 'styled-components/native';
 import theme from '../styles/theme';
-interface Doctor {
-    id: string;
-    name: string;
-    specialty: string;
-    image: string;
-}
+import { User } from '../types/auth';
+
 interface DoctorListProps {
-    doctors: Doctor[];
-    onSelectDoctor: (doctor: Doctor) => void;
+    doctors: User[];
+    onSelectDoctor: (doctor: User) => void;
     selectedDoctorId?: string;
     style?: ViewStyle;
 }
@@ -41,7 +37,9 @@ const DoctorList: React.FC<DoctorListProps> = ({
                     <ListItem.Content>
                         <ListItem.Title style={styles.name}>{doctor.name}</ListItem.Title>
                         <ListItem.Subtitle style={styles.specialty}>
-                            {doctor.specialty}
+                            {doctor.role === 'doctor' && 'specialty' in doctor 
+                                ? doctor.specialty 
+                                : 'Especialidade não informada'}
                         </ListItem.Subtitle>
                     </ListItem.Content>
                     <ListItem.Chevron />

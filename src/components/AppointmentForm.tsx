@@ -1,30 +1,10 @@
-import React, { useState } from 'react';
-import { TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
 import theme from '../styles/theme';
-import { Doctor } from '../types/doctors';
-
-const doctors: Doctor[] = [
-    {
-        id: '1',
-        name: 'Dr. João Silva',
-        specialty: 'Cardiologista',
-        image: 'https://mighty.tools/mockmind-api/content/human/91.jpg',
-    },
-    {
-        id: '2',
-        name: 'Dra. Maria Santos',
-        specialty: 'Dermatologista',
-        image: 'https://mighty.tools/mockmind-api/content/human/97.jpg',
-    },
-    {
-        id: '3',
-        name: 'Dr. Pedro Oliveira',
-        specialty: 'Oftalmologista',
-        image: 'https://mighty.tools/mockmind-api/content/human/79.jpg',
-    },
-];
+import { User } from '../types/auth';
+import { authApiService } from '../services/authApi';
 
 type AppointmentFormProps = {
     onSubmit: (appointment: {
@@ -49,7 +29,25 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onSubmit }) => {
     const [dateInput, setDateInput] = useState('');
     const [selectedTime, setSelectedTime] = useState<string>('');
     const [description, setDescription] = useState('');
+    const [doctors, setDoctors] = useState<User[]>([]);
+    const [loading, setLoading] = useState(true);
     const timeSlots = generateTimeSlots();
+
+    useEffect(() => {
+        loadDoctors();
+    }, []);
+
+    const loadDoctors = async () => {
+        try {
+            setLoading(true);
+            const doctorsData = await authApiService.getAllDoctors();
+            setDoctors(doctorsData);
+        } catch (error) {
+            console.error('Erro ao carregar médicos:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const validateDate = (inputDate: string) => {
         const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -112,6 +110,17 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onSubmit }) => {
         return true;
     };
 
+    if (loading) {
+        return (
+            <Container>
+                <ActivityIndicator size="large" color={theme.colors.primary} />
+                <Text style={{ textAlign: 'center', marginTop: 16, color: theme.colors.text }}>
+                    Carregando médicos...
+                </Text>
+            </Container>
+        );
+    }
+
     return (
         <Container>
             <Title>Selecione o Médico</Title>
@@ -125,7 +134,11 @@ const AppointmentForm: React.FC<AppointmentFormProps> = ({ onSubmit }) => {
                         <DoctorImage source={{ uri: doctor.image }} />
                         <DoctorInfo>
                             <DoctorName>{doctor.name}</DoctorName>
-                            <DoctorSpecialty>{doctor.specialty}</DoctorSpecialty>
+                            <DoctorSpecialty>
+                                {doctor.role === 'doctor' && 'specialty' in doctor 
+                                    ? doctor.specialty 
+                                    : 'Especialidade não informada'}
+                            </DoctorSpecialty>
                         </DoctorInfo>
                     </DoctorCard>
                 ))}
