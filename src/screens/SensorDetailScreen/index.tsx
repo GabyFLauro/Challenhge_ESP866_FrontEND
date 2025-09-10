@@ -1,22 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../../components/Logo';
 import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
+import { readingsService, ReadingDTO } from '../../services/readings';
 
 // Função auxiliar para cores RGBA
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
 
-// Mock data para simulação
-const generateMockData = (status: 'ok' | 'warning' | 'error') => {
-  const baseValue = status === 'ok' ? 50 : status === 'warning' ? 75 : 90;
-  return Array.from({ length: 8 }, (_, i) => ({
-    timestamp: new Date(Date.now() - i * 60000).toLocaleTimeString(),
-    value: baseValue + (Math.random() * 10 - 5),
-  }));
-};
+type Status = 'ok' | 'warning' | 'error';
 
 // Calcular tamanho responsivo do gráfico
 const getChartDimensions = (screenWidth: number) => {
@@ -53,24 +47,37 @@ export const SensorDetailScreen = () => {
   const { width: screenWidth } = useWindowDimensions();
   const { width: chartWidth, height: chartHeight, fontSize: chartFontSize } = getChartDimensions(screenWidth);
 
-  const getSensorStatus = (id: string): 'ok' | 'warning' | 'error' => {
-    switch (id) {
-      case '2':
-        return 'error';
-      case '3':
-        return 'warning';
-      case '7':
-        return 'error';
-      default:
-        return 'ok';
+  const [readings, setReadings] = useState<ReadingDTO[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [posting, setPosting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const status: Status = useMemo(() => {
+    if (readings.length === 0) return 'ok';
+    const last = [...readings].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0];
+    if (!last) return 'ok';
+    return last.value >= 80 ? 'error' : last.value >= 60 ? 'warning' : 'ok';
+  }, [readings]);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await readingsService.listBySensor(sensorId);
+      setReadings(data);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Falha ao buscar histórico');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const status = getSensorStatus(sensorId);
-  const [sensorData, setSensorData] = useState(generateMockData(status));
+  useEffect(() => {
+    load();
+  }, [sensorId]);
 
   const handleUpdate = () => {
-    setSensorData(generateMockData(status));
+    load();
   };
 
   const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
@@ -113,10 +120,10 @@ export const SensorDetailScreen = () => {
   };
 
   const chartData = {
-    labels: sensorData.map(data => data.timestamp.split(':').slice(0, 2).join(':')),
+    labels: readings.map(data => new Date(data.timestamp).toLocaleTimeString().split(':').slice(0, 2).join(':')),
     datasets: [
       {
-        data: sensorData.map(data => data.value),
+        data: readings.map(data => data.value),
         color: (opacity = 1) => rgba(0, 122, 255, opacity),
         strokeWidth: 2,
       },
@@ -164,36 +171,42 @@ export const SensorDetailScreen = () => {
         </View>
       </View>
 
-      <View style={styles.currentValueContainer}>
-        <Text style={styles.currentValueLabel}>Valor Atual:</Text>
-        <Text style={[styles.currentValue, { color: getStatusColor(status) }]}>
-          {sensorData[0].value.toFixed(2)}
-        </Text>
-      </View>
+      {!!readings.length && (
+        <View style={styles.currentValueContainer}>
+          <Text style={styles.currentValueLabel}>Valor Atual:</Text>
+          <Text style={[styles.currentValue, { color: getStatusColor(status) }]}>
+            {readings[0].value.toFixed(2)}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.chartContainer}>
         <Text style={styles.chartTitle}>Gráfico de Linha</Text>
-        <LineChart
-          data={chartData}
-          width={chartWidth}
-          height={chartHeight}
-          chartConfig={getLineChartConfig(chartFontSize)}
-          bezier
-          style={styles.chart}
-          withInnerLines={false}
-          withOuterLines={false}
-          withVerticalLines={false}
-          withHorizontalLines={true}
-          withDots={true}
-          segments={4}
-        />
+        {loading ? (
+          <ActivityIndicator size="large" color="#007AFF" />
+        ) : (
+          <LineChart
+            data={chartData}
+            width={chartWidth}
+            height={chartHeight}
+            chartConfig={getLineChartConfig(chartFontSize)}
+            bezier
+            style={styles.chart}
+            withInnerLines={false}
+            withOuterLines={false}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            withDots={true}
+            segments={4}
+          />
+        )}
       </View>
 
       <View style={styles.historyContainer}>
         <Text style={styles.historyTitle}>Histórico</Text>
-        {sensorData.map((data, index) => (
+        {readings.map((data, index) => (
           <View key={index} style={styles.historyItem}>
-            <Text style={styles.historyText}>{data.timestamp}</Text>
+            <Text style={styles.historyText}>{new Date(data.timestamp).toLocaleString()}</Text>
             <Text style={styles.historyText}>{data.value.toFixed(2)}</Text>
           </View>
         ))}
@@ -201,6 +214,29 @@ export const SensorDetailScreen = () => {
 
       <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
         <Text style={styles.updateButtonText}>Atualizar</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.updateButton, { backgroundColor: '#34C759' }]}
+        onPress={async () => {
+          setPosting(true);
+          try {
+            const mock = {
+              sensorId,
+              value: Math.round(40 + Math.random() * 70),
+            };
+            await readingsService.create(mock);
+            Alert.alert('Sucesso', 'Leitura registrada');
+            load();
+          } catch (e) {
+            Alert.alert('Erro', e instanceof Error ? e.message : 'Falha ao registrar leitura');
+          } finally {
+            setPosting(false);
+          }
+        }}
+        disabled={posting}
+      >
+        <Text style={styles.updateButtonText}>{posting ? 'Enviando...' : 'Registrar Leitura'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );

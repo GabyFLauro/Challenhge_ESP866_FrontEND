@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,21 +9,62 @@ import { Logo } from '../../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { Sensor } from './interfaces/sensor';
+import { readingsService, ReadingDTO } from '../../services/readings';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Sensors'>;
 
 export const SensorsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
-    const [sensors] = useState<Sensor[]>([
-        { id: '1', name: 'Sensor de Proximidade Magnético', status: 'ok', lastUpdate: '2024-02-20 10:30' },
-        { id: '2', name: 'Encoder Linear', status: 'error', lastUpdate: '2024-02-20 10:25' },
-        { id: '3', name: 'Sensor de Pressão', status: 'warning', lastUpdate: '2024-02-20 10:20' },
-        { id: '4', name: 'Fluxômetro de Ar', status: 'ok', lastUpdate: '2024-02-20 10:15' },
-        { id: '5', name: 'Contador de Ciclos', status: 'ok', lastUpdate: '2024-02-20 10:10' },
-        { id: '6', name: 'Sensor de Tempo', status: 'ok', lastUpdate: '2024-02-20 10:05' },
-        { id: '7', name: 'Sensor de Vibração', status: 'error', lastUpdate: '2024-02-20 10:00' },
-        { id: '8', name: 'Sensor de Temperatura', status: 'ok', lastUpdate: '2024-02-20 09:55' },
-    ]);
+    const [sensors, setSensors] = useState<Sensor[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const groupBySensor = (readings: ReadingDTO[]): Sensor[] => {
+        const map = new Map<string, ReadingDTO[]>();
+        readings.forEach(r => {
+            if (!map.has(r.sensorId)) map.set(r.sensorId, []);
+            map.get(r.sensorId)!.push(r);
+        });
+        return Array.from(map.entries()).map(([sensorId, rs]) => {
+            const last = rs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0];
+            return {
+                id: sensorId,
+                name: `Sensor ${sensorId}`,
+                status: last && last.value >= 80 ? 'error' : last && last.value >= 60 ? 'warning' : 'ok',
+                lastUpdate: last ? new Date(last.timestamp).toLocaleString() : '-',
+            } as Sensor;
+        });
+    };
+
+    const load = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const readings = await readingsService.list();
+            setSensors(groupBySensor(readings));
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Falha ao buscar sensores');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        load();
+    }, []);
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+        try {
+            const readings = await readingsService.list();
+            setSensors(groupBySensor(readings));
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Falha ao atualizar');
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     const getStatusColor = (status: Sensor['status']) => {
         switch (status) {
@@ -57,7 +98,13 @@ export const SensorsScreen = () => {
             <View style={styles.header}>
                 <Text h4 style={styles.title}>Sensores Disponíveis</Text>
             </View>
-            <ScrollView style={styles.scrollView}>
+            {loading ? (
+                <ActivityIndicator size="large" color="#007AFF" />
+            ) : (
+            <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+                {error && (
+                    <Text style={{ color: '#FF3B30', marginBottom: 8 }}>{error}</Text>
+                )}
                 {sensors.map((sensor) => (
                     <TouchableOpacity
                         key={sensor.id}
@@ -82,6 +129,7 @@ export const SensorsScreen = () => {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
+            )}
         </View>
     );
 };

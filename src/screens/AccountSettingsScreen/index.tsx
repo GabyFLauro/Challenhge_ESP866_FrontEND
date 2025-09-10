@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Button, Input } from 'react-native-elements';
 import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/auth';
 import { Logo } from '../../components/Logo';
 import { styles } from './styles';
+import { getApiBaseUrl, setApiBaseUrl } from '../../services/runtimeConfig';
+import { API_CONFIG } from '../../config/api';
 
 export const AccountSettingsScreen = () => {
   const { user } = useAuth();
@@ -13,6 +15,14 @@ export const AccountSettingsScreen = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [apiUrl, setApiUrl] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const stored = await getApiBaseUrl();
+      setApiUrl(stored || API_CONFIG.BASE_URL);
+    })();
+  }, []);
 
   const getAccountTypeText = (role: string) => {
     switch (role) {
@@ -69,6 +79,19 @@ export const AccountSettingsScreen = () => {
     }
   };
 
+  const handleSaveApiUrl = async () => {
+    if (!apiUrl) {
+      Alert.alert('Erro', 'Informe uma URL válida');
+      return;
+    }
+    try {
+      await setApiBaseUrl(apiUrl);
+      Alert.alert('Sucesso', 'URL da API atualizada.');
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível salvar a URL');
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -97,6 +120,25 @@ export const AccountSettingsScreen = () => {
           title="Atualizar Email"
           onPress={handleUpdateEmail}
           loading={loading}
+          containerStyle={styles.button}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Configurações da API</Text>
+        <Input
+          placeholder="URL da API (ex: http://localhost:8080)"
+          value={apiUrl}
+          onChangeText={setApiUrl}
+          autoCapitalize="none"
+          autoCorrect={false}
+          containerStyle={styles.input}
+          inputStyle={styles.inputText}
+          placeholderTextColor="#8E8E93"
+        />
+        <Button
+          title="Salvar URL da API"
+          onPress={handleSaveApiUrl}
           containerStyle={styles.button}
         />
       </View>
