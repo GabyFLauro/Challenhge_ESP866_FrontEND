@@ -21,7 +21,7 @@ const RegisterScreen: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [userType, setUserType] = useState<'PACIENTE' | 'ADMIN'>('PACIENTE');
+    const [userType, setUserType] = useState<'USER' | 'ADMIN'>('USER');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
@@ -47,7 +47,9 @@ const RegisterScreen: React.FC = () => {
             Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
             navigation.navigate('Login');
         } catch (err) {
-            setError('Erro ao criar conta. Tente novamente.');
+            const message = err instanceof Error && err.message ? err.message : 'Erro ao criar conta. Tente novamente.';
+            setError(message);
+            Alert.alert('Erro', message);
         } finally {
             setLoading(false);
         }
@@ -102,11 +104,11 @@ const RegisterScreen: React.FC = () => {
                 <Text style={styles.userTypeLabel}>Tipo de Usuário:</Text>
                 <UserTypeContainer>
                     <UserTypeButton
-                        selected={userType === 'PACIENTE'}
-                        onPress={() => setUserType('PACIENTE')}
+                        selected={userType === 'USER'}
+                        onPress={() => setUserType('USER')}
                     >
-                        <UserTypeText selected={userType === 'PACIENTE'}>
-                            Paciente
+                        <UserTypeText selected={userType === 'USER'}>
+                            Usuário
                         </UserTypeText>
                     </UserTypeButton>
                     <UserTypeButton

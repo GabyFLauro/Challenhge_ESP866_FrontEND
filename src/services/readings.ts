@@ -1,7 +1,7 @@
 import { apiClient } from './apiClient';
-
-// Ajuste aqui caso o backend use um caminho diferente
-const READINGS_BASE = '/api/readings';
+// Endpoints de leituras conforme objetivo da sprint
+// Note: BASE_URL já inclui /api; aqui mantemos apenas o path relativo
+const READINGS_BASE = '/readings';
 
 export interface ReadingDTO {
   id: string;
@@ -17,11 +17,21 @@ export interface CreateReadingDTO {
 
 export const readingsService = {
   async list(): Promise<ReadingDTO[]> {
-    return apiClient.get<ReadingDTO[]>(READINGS_BASE);
+    try {
+      return await apiClient.get<ReadingDTO[]>(READINGS_BASE);
+    } catch (e) {
+      // Fallback: retorna lista vazia quando o endpoint não existir
+      return [];
+    }
   },
 
   async listBySensor(sensorId: string): Promise<ReadingDTO[]> {
-    return apiClient.get<ReadingDTO[]>(`${READINGS_BASE}?sensorId=${encodeURIComponent(sensorId)}`);
+    try {
+      // Backend expõe GET /readings/{sensorId}
+      return await apiClient.get<ReadingDTO[]>(`${READINGS_BASE}/${encodeURIComponent(sensorId)}`);
+    } catch (e) {
+      return [];
+    }
   },
 
   async create(data: CreateReadingDTO): Promise<ReadingDTO> {

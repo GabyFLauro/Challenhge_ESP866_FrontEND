@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authService } from '../services/auth';
+import { apiClient } from '../services/apiClient';
 import { AuthContextData, LoginCredentials, RegisterData, User } from '../types/auth';
 
 // Chaves de armazenamento
@@ -16,8 +17,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadStoredUser();
-        loadRegisteredUsers();
+        bootstrap();
     }, []);
 
     const loadStoredUser = async () => {
@@ -33,13 +33,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-    const loadRegisteredUsers = async () => {
+    const bootstrap = async () => {
         try {
-            await authService.loadRegisteredUsers();
-        } catch (error) {
-            console.error('Erro ao carregar usuários registrados:', error);
+            // Restaura token, se existir
+            const storedToken = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+            if (storedToken) {
+                apiClient.setToken(storedToken);
+            }
+        } catch {}
+        finally {
+            await loadStoredUser();
         }
     };
+
+    // Removido: chamada inexistente a loadRegisteredUsers
 
     const signIn = async (credentials: LoginCredentials) => {
         try {

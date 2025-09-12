@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
@@ -10,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import theme from '../../styles/theme';
 import { RootStackParamList } from '../../types/navigation';
 import { styles } from './styles';
-import { Appointment } from './interfaces/appointments';
+import { appointmentsService, Appointment } from '../../services/appointments';
 import { StyledProps } from './interfaces/stylesprops';
 
 type DoctorDashboardScreenProps = {
@@ -47,14 +46,9 @@ const DoctorDashboardScreen: React.FC = () => {
 
     const loadAppointments = async () => {
         try {
-            const storedAppointments = await AsyncStorage.getItem('@MedicalApp:appointments');
-            if (storedAppointments) {
-                const allAppointments: Appointment[] = JSON.parse(storedAppointments);
-                const doctorAppointments = allAppointments.filter(
-                    (appointment) => appointment.doctorId === user?.id
-                );
-                setAppointments(doctorAppointments);
-            }
+            if (!user) return;
+            const doctorAppointments = await appointmentsService.listByDoctor(user.id);
+            setAppointments(doctorAppointments);
         } catch (error) {
             console.error('Erro ao carregar consultas:', error);
         } finally {
@@ -64,18 +58,8 @@ const DoctorDashboardScreen: React.FC = () => {
 
     const handleUpdateStatus = async (appointmentId: string, newStatus: 'confirmed' | 'cancelled') => {
         try {
-            const storedAppointments = await AsyncStorage.getItem('@MedicalApp:appointments');
-            if (storedAppointments) {
-                const allAppointments: Appointment[] = JSON.parse(storedAppointments);
-                const updatedAppointments = allAppointments.map(appointment => {
-                    if (appointment.id === appointmentId) {
-                        return { ...appointment, status: newStatus };
-                    }
-                    return appointment;
-                });
-                await AsyncStorage.setItem('@MedicalApp:appointments', JSON.stringify(updatedAppointments));
-                loadAppointments(); // Recarrega a lista
-            }
+            await appointmentsService.updateStatus(appointmentId, newStatus);
+            await loadAppointments();
         } catch (error) {
             console.error('Erro ao atualizar status:', error);
         }

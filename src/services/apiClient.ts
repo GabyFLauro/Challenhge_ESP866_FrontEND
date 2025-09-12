@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config/api';
+import { Platform } from 'react-native';
 
 /**
  * Cliente HTTP para comunicação com a API
@@ -10,7 +11,12 @@ class ApiClient {
   private token: string | null = null;
 
   constructor() {
-    this.baseURL = API_CONFIG.BASE_URL;
+    // Ajuste automático de host para Android Emulator (localhost -> 10.0.2.2)
+    if (Platform.OS === 'android' && API_CONFIG.BASE_URL.includes('localhost')) {
+      this.baseURL = API_CONFIG.BASE_URL.replace('localhost', '10.0.2.2');
+    } else {
+      this.baseURL = API_CONFIG.BASE_URL;
+    }
     this.timeout = API_CONFIG.TIMEOUT;
     this.defaultHeaders = { ...API_CONFIG.DEFAULT_HEADERS };
   }
@@ -20,6 +26,15 @@ class ApiClient {
    */
   setToken(token: string | null) {
     this.token = token;
+  }
+
+  /**
+   * Atualiza a URL base da API em tempo de execução
+   */
+  setBaseURL(url: string) {
+    if (url && url.trim().length > 0) {
+      this.baseURL = url.trim();
+    }
   }
 
   /**

@@ -80,6 +80,37 @@ export const SensorDetailScreen = () => {
     load();
   };
 
+  const randomInRange = (min: number, max: number, decimals = 2) => {
+    const n = Math.random() * (max - min) + min;
+    const factor = Math.pow(10, decimals);
+    return Math.round(n * factor) / factor;
+  };
+
+  const getMockValueForSensor = (id: string): number => {
+    switch (id) {
+      // Pressão em bar (ou unidade equivalente) – faixas coerentes
+      case 'p1': // XGZP701DB1R
+        return randomInRange(2.0, 8.0, 2);
+      case 'p2': // HX710B
+        return randomInRange(1.0, 6.0, 2);
+      // Temperatura em °C
+      case 't1': // DS18B20
+        return randomInRange(18.0, 35.0, 1);
+      // Chave fim de curso (0/1)
+      case 'l1':
+        return Math.random() < 0.5 ? 0 : 1;
+      // Vibração em m/s² aproximado
+      case 'vx':
+        return randomInRange(0.0, 15.0, 2);
+      case 'vy':
+        return randomInRange(0.0, 15.0, 2);
+      case 'vz':
+        return randomInRange(0.0, 15.0, 2);
+      default:
+        return randomInRange(0.0, 100.0, 2);
+    }
+  };
+
   const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
@@ -132,22 +163,20 @@ export const SensorDetailScreen = () => {
 
   const getSensorName = (id: string): string => {
     switch (id) {
-      case '1':
-        return 'Sensor de Proximidade Magnético';
-      case '2':
-        return 'Encoder Linear';
-      case '3':
-        return 'Sensor de Pressão';
-      case '4':
-        return 'Fluxômetro de Ar';
-      case '5':
-        return 'Contador de Ciclos';
-      case '6':
-        return 'Sensor de Tempo';
-      case '7':
-        return 'Sensor de Vibração';
-      case '8':
-        return 'Sensor de Temperatura';
+      case 'p1':
+        return 'Pressão 01 (XGZP701DB1R)';
+      case 'p2':
+        return 'Pressão 02 (HX710B)';
+      case 't1':
+        return 'Temperatura (DS18B20)';
+      case 'l1':
+        return 'Chave fim de curso';
+      case 'vx':
+        return 'Vibração X';
+      case 'vy':
+        return 'Vibração Y';
+      case 'vz':
+        return 'Vibração Z';
       default:
         return 'Sensor Desconhecido';
     }
@@ -223,7 +252,7 @@ export const SensorDetailScreen = () => {
           try {
             const mock = {
               sensorId,
-              value: Math.round(40 + Math.random() * 70),
+              value: getMockValueForSensor(sensorId),
             };
             await readingsService.create(mock);
             Alert.alert('Sucesso', 'Leitura registrada');

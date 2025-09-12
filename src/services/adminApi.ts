@@ -6,7 +6,7 @@ interface ApiUser {
   id: number;
   nome: string;
   email: string;
-  tipoUsuario: 'ADMIN' | 'MEDICO' | 'PACIENTE';
+  tipo: 'ADMIN' | 'PACIENTE';
   especialidade?: string;
 }
 
@@ -16,8 +16,7 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'doctor' | 'patient';
-  specialty?: string;
+  role: 'admin' | 'user';
 }
 
 // Interface para alteração de senha
@@ -87,40 +86,12 @@ export const adminApiService = {
       id: apiUser.id.toString(),
       name: apiUser.nome,
       email: apiUser.email,
+      image: undefined as string | undefined,
     };
 
-    switch (apiUser.tipoUsuario) {
-      case 'ADMIN':
-        return {
-  ...baseUser, role: 'admin' as const,
-  image: undefined,
-  id: '',
-  name: '',
-  email: '',
-  role: 'admin'
-};
-      case 'MEDICO':
-        return {
-  ...baseUser,
-  role: 'doctor' as const,
-  specialty: apiUser.especialidade || 'Especialidade não informada',
-  image: undefined,
-  id: '',
-  name: '',
-  email: '',
-  role: 'admin'
-};
-      case 'PACIENTE':
-        return {
-  ...baseUser, role: 'patient' as const,
-  image: undefined,
-  id: '',
-  name: '',
-  email: '',
-  role: 'admin'
-};
-      default:
-        throw new Error(`Tipo de usuário inválido: ${apiUser.tipoUsuario}`);
+    if (apiUser.tipo === 'ADMIN') {
+      return { ...baseUser, role: 'admin' };
     }
+    return { ...baseUser, role: 'user' };
   },
 };

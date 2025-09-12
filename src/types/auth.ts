@@ -1,7 +1,7 @@
 /**
  * Perfis de usuário disponíveis no sistema
  */
-export type UserRole = 'admin' | 'doctor' | 'patient';
+export type UserRole = 'admin' | 'user';
 
 /**
  * Interface base do usuário
@@ -17,17 +17,12 @@ export interface BaseUser {
 /**
  * Interface do médico
  */
-export interface Doctor extends BaseUser {
-    role: 'doctor';
-    specialty: string;
-}
+// Removido: papéis de médico
 
 /**
  * Interface do paciente
  */
-export interface Patient extends BaseUser {
-    role: 'patient';
-}
+// Removido: papéis de paciente
 
 /**
  * Interface do administrador
@@ -39,7 +34,11 @@ export interface Admin extends BaseUser {
 /**
  * Interface do usuário autenticado
  */
-export type User = Admin | Doctor | Patient;
+export interface CommonUser extends BaseUser {
+    role: 'user';
+}
+
+export type User = Admin | CommonUser;
 
 /**
  * Dados necessários para login
@@ -56,7 +55,7 @@ export interface RegisterData {
     name: string;
     email: string;
     password: string;
-    userType?: 'PACIENTE' | 'ADMIN';
+    userType?: 'USER' | 'ADMIN';
 }
 
 /**

@@ -9,7 +9,7 @@ import { Logo } from '../../components/Logo';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { Sensor } from './interfaces/sensor';
-import { readingsService, ReadingDTO } from '../../services/readings';
+import { sensorsService } from '../../services/sensors';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Sensors'>;
 
@@ -20,29 +20,17 @@ export const SensorsScreen = () => {
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
 
-    const groupBySensor = (readings: ReadingDTO[]): Sensor[] => {
-        const map = new Map<string, ReadingDTO[]>();
-        readings.forEach(r => {
-            if (!map.has(r.sensorId)) map.set(r.sensorId, []);
-            map.get(r.sensorId)!.push(r);
-        });
-        return Array.from(map.entries()).map(([sensorId, rs]) => {
-            const last = rs.sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0];
-            return {
-                id: sensorId,
-                name: `Sensor ${sensorId}`,
-                status: last && last.value >= 80 ? 'error' : last && last.value >= 60 ? 'warning' : 'ok',
-                lastUpdate: last ? new Date(last.timestamp).toLocaleString() : '-',
-            } as Sensor;
-        });
+    const mapSensors = (items: { id: string; name: string; model?: string }[]): Sensor[] => {
+        const now = new Date().toLocaleString();
+        return items.map(s => ({ id: s.id, name: s.model ? `${s.name} (${s.model})` : s.name, status: 'ok', lastUpdate: now }));
     };
 
     const load = async () => {
         setLoading(true);
         setError(null);
         try {
-            const readings = await readingsService.list();
-            setSensors(groupBySensor(readings));
+            const sensors = await sensorsService.list();
+            setSensors(mapSensors(sensors));
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Falha ao buscar sensores');
         } finally {
@@ -57,8 +45,8 @@ export const SensorsScreen = () => {
     const onRefresh = async () => {
         setRefreshing(true);
         try {
-            const readings = await readingsService.list();
-            setSensors(groupBySensor(readings));
+            const sensors = await sensorsService.list();
+            setSensors(mapSensors(sensors));
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Falha ao atualizar');
         } finally {

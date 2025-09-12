@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { authService } from '../../services/auth';
 import { Logo } from '../../components/Logo';
 import { styles } from './styles';
-import { getApiBaseUrl, setApiBaseUrl } from '../../services/runtimeConfig';
 import { API_CONFIG } from '../../config/api';
 
 export const AccountSettingsScreen = () => {
@@ -15,14 +14,9 @@ export const AccountSettingsScreen = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [apiUrl, setApiUrl] = useState('');
+  const [apiUrl] = useState(API_CONFIG.BASE_URL);
 
-  useEffect(() => {
-    (async () => {
-      const stored = await getApiBaseUrl();
-      setApiUrl(stored || API_CONFIG.BASE_URL);
-    })();
-  }, []);
+  useEffect(() => {}, []);
 
   const getAccountTypeText = (role: string) => {
     switch (role) {
@@ -80,16 +74,7 @@ export const AccountSettingsScreen = () => {
   };
 
   const handleSaveApiUrl = async () => {
-    if (!apiUrl) {
-      Alert.alert('Erro', 'Informe uma URL válida');
-      return;
-    }
-    try {
-      await setApiBaseUrl(apiUrl);
-      Alert.alert('Sucesso', 'URL da API atualizada.');
-    } catch (e) {
-      Alert.alert('Erro', 'Não foi possível salvar a URL');
-    }
+    Alert.alert('Informação', `A URL da API é fixa: ${API_CONFIG.BASE_URL}`);
   };
 
   return (
@@ -125,22 +110,8 @@ export const AccountSettingsScreen = () => {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Configurações da API</Text>
-        <Input
-          placeholder="URL da API (ex: http://localhost:8080)"
-          value={apiUrl}
-          onChangeText={setApiUrl}
-          autoCapitalize="none"
-          autoCorrect={false}
-          containerStyle={styles.input}
-          inputStyle={styles.inputText}
-          placeholderTextColor="#8E8E93"
-        />
-        <Button
-          title="Salvar URL da API"
-          onPress={handleSaveApiUrl}
-          containerStyle={styles.button}
-        />
+        <Text style={styles.sectionTitle}>Banco H2</Text>
+        <Text style={styles.userInfo}>Console: http://localhost:8080/h2-console/</Text>
       </View>
 
       <View style={styles.section}>

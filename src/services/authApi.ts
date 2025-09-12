@@ -23,7 +23,7 @@ interface ApiUser {
     id: number;
     nome: string;
     email: string;
-    tipoUsuario: 'ADMIN' | 'MEDICO' | 'PACIENTE';
+    tipo: 'ADMIN' | 'MEDICO' | 'PACIENTE';
     especialidade?: string;
 }
 
@@ -48,8 +48,8 @@ export const authApiService = {
             // Define o token no cliente da API
             apiClient.setToken(loginResponse.token);
 
-            // Busca os dados do usuário
-            const userData = await this.getCurrentUser();
+            // Busca os dados do usuário (usa email como dica para fallback)
+            const userData = await this.getCurrentUser(credentials.email);
 
             // Salva token e usuário no AsyncStorage
             await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, loginResponse.token);
@@ -60,8 +60,9 @@ export const authApiService = {
                 token: loginResponse.token,
             };
         } catch (error) {
-            console.error('Erro no login:', error);
-            throw new Error('Email ou senha inválidos');
+            const message = error instanceof Error && error.message ? error.message : 'Email ou senha inválidos';
+            console.error('Erro no login:', message);
+            throw new Error(message);
         }
     },
 
@@ -75,7 +76,7 @@ export const authApiService = {
                 nome: data.name,
                 email: data.email,
                 senha: data.password,
-                tipoUsuario: 'PACIENTE',
+                tipo: data.userType === 'ADMIN' ? 'ADMIN' : 'PACIENTE',
             });
 
             // Faz login automaticamente após o registro
@@ -84,19 +85,34 @@ export const authApiService = {
                 password: data.password,
             });
         } catch (error) {
-            console.error('Erro no registro:', error);
-            throw new Error('Erro ao criar conta. Verifique se o email já não está em uso.');
+            const message = error instanceof Error && error.message ? error.message : 'Erro ao criar conta. Verifique se o email já não está em uso.';
+            console.error('Erro no registro:', message);
+            throw new Error(message);
         }
     },
 
     /**
      * Obtém os dados do usuário atual baseado no token JWT
      */
-    async getCurrentUser(): Promise<User> {
+    async getCurrentUser(emailHint?: string): Promise<User> {
         try {
-            // Busca o usuário atual usando o endpoint específico que utiliza o JWT
-            const currentUser = await apiClient.get<ApiUser>(API_ENDPOINTS.CURRENT_USER);
-            return this.mapApiUserToUser(currentUser);
+            // Preferência: tentar endpoint dedicado; se indisponível, cai para lista e match por email
+            try {
+                const currentUser = await apiClient.get<ApiUser>(API_ENDPOINTS.CURRENT_USER);
+                return this.mapApiUserToUser(currentUser);
+            } catch (e) {
+                // Fallback: busca por email na lista
+                const storedTokenUser = await this.getStoredUser();
+                const allUsers = await apiClient.get<ApiUser[]>(API_ENDPOINTS.USERS);
+                const targetEmail = (emailHint || storedTokenUser?.email || '').toLowerCase();
+                const matched = targetEmail
+                  ? allUsers.find(u => (u.email || '').toLowerCase() === targetEmail)
+                  : undefined;
+                if (!matched) {
+                    throw e instanceof Error ? e : new Error('Usuário não encontrado');
+                }
+                return this.mapApiUserToUser(matched);
+            }
         } catch (error) {
             console.error('Erro ao buscar usuário atual:', error);
             throw new Error('Erro ao carregar dados do usuário');
@@ -263,11 +279,11 @@ export const authApiService = {
     mapApiUserToUser(apiUser: ApiUser): User {
         // Define imagem baseada no tipo de usuário
         let image: string;
-        if (apiUser.tipoUsuario === 'ADMIN') {
+        if (apiUser.tipo === 'ADMIN') {
             // Ícone de avatar para admins - SVG simples de usuário
             image = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgdmlld0JveD0iMCAwIDEwMCAxMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjUwIiBjeT0iNTAiIHI9IjUwIiBmaWxsPSIjNjY2NjY2Ii8+CjxjaXJjbGUgY3g9IjUwIiBjeT0iMzUiIHI9IjE1IiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNNTAgNjVDMzUgNjUgMjUgNzUgMjUgODVWOTVINzVWODVDNzUgNzUgNjUgNjUgNTAgNjVaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K';
         } else {
-            // Fotos aleatórias para médicos e pacientes
+            // Foto aleatória para usuários comuns
             image = `https://randomuser.me/api/portraits/${apiUser.id % 2 === 0 ? 'men' : 'women'}/${(apiUser.id % 10) + 1}.jpg`;
         }
 
@@ -278,25 +294,9 @@ export const authApiService = {
             image,
         };
 
-        switch (apiUser.tipoUsuario) {
-            case 'ADMIN':
-                return {
-                    ...baseUser,
-                    role: 'admin' as const,
-                };
-            case 'MEDICO':
-                return {
-                    ...baseUser,
-                    role: 'doctor' as const,
-                    specialty: apiUser.especialidade || 'Especialidade não informada',
-                };
-            case 'PACIENTE':
-                return {
-                    ...baseUser,
-                    role: 'patient' as const,
-                };
-            default:
-                throw new Error(`Tipo de usuário inválido: ${apiUser.tipoUsuario}`);
+        if (apiUser.tipo === 'ADMIN') {
+            return { ...baseUser, role: 'admin' } as User;
         }
+        return { ...baseUser, role: 'user' } as User;
     },
 };
