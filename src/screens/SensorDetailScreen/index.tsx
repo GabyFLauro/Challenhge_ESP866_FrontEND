@@ -6,6 +6,7 @@ import { LineChart } from 'react-native-chart-kit'; // Importação apenas do Li
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { readingsService, ReadingDTO } from '../../services/readings';
+import { sensorsService, SensorDTO } from '../../services/sensors';
 
 // Função auxiliar para cores RGBA
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
@@ -36,7 +37,15 @@ const getLineChartConfig = (fontSize: number) => ({
     stroke: '#007AFF',
   },
   propsForLabels: {
-    fontSize,
+    fontSize: Math.max(10, fontSize - 2), // Reduzir tamanho da fonte
+  },
+  // Configurações para evitar sobreposição
+  propsForVerticalLabels: {
+    fontSize: Math.max(8, fontSize - 4),
+    rotation: 0,
+  },
+  propsForHorizontalLabels: {
+    fontSize: Math.max(8, fontSize - 4),
   },
 });
 
@@ -48,25 +57,67 @@ export const SensorDetailScreen = () => {
   const { width: chartWidth, height: chartHeight, fontSize: chartFontSize } = getChartDimensions(screenWidth);
 
   const [readings, setReadings] = useState<ReadingDTO[]>([]);
+  const [sensor, setSensor] = useState<SensorDTO | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [posting, setPosting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const status: Status = useMemo(() => {
     if (readings.length === 0) return 'ok';
-    const last = [...readings].sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))[0];
+    
+    // Ordenar leituras por timestamp (mais recente primeiro)
+    const sortedReadings = [...readings].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const last = sortedReadings[0];
+    
     if (!last) return 'ok';
+    
+    // Lógica de status baseada no tipo de sensor e valores
+    if (sensor) {
+      const { minValue, maxValue, type } = sensor;
+      
+      if (type === 'limit_switch') {
+        return last.value === 1 ? 'ok' : 'warning';
+      }
+      
+      if (minValue !== undefined && maxValue !== undefined) {
+        const range = maxValue - minValue;
+        const warningThreshold = maxValue - (range * 0.1); // 90% da faixa máxima
+        const errorThreshold = maxValue - (range * 0.05); // 95% da faixa máxima
+        
+        if (last.value >= errorThreshold) return 'error';
+        if (last.value >= warningThreshold) return 'warning';
+        return 'ok';
+      }
+    }
+    
+    // Fallback para lógica antiga
     return last.value >= 80 ? 'error' : last.value >= 60 ? 'warning' : 'ok';
-  }, [readings]);
+  }, [readings, sensor]);
 
   const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await readingsService.listBySensor(sensorId);
-      setReadings(data);
+      console.log(`🔍 Carregando dados para sensor: ${sensorId}`);
+      
+      // Buscar dados do sensor e leituras em paralelo
+      const [sensorData, readingsData] = await Promise.all([
+        sensorsService.getById(sensorId),
+        readingsService.listBySensor(sensorId)
+      ]);
+      
+      console.log(`📊 Sensor carregado:`, sensorData);
+      console.log(`📈 Leituras carregadas: ${readingsData.length} leituras`);
+      
+      setSensor(sensorData);
+      setReadings(readingsData);
+      
+      if (readingsData.length === 0) {
+        console.log('⚠️ Nenhuma leitura encontrada para este sensor');
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Falha ao buscar histórico');
+      console.error('❌ Erro ao carregar dados do sensor:', e);
+      setError(e instanceof Error ? e.message : 'Falha ao buscar dados do sensor');
     } finally {
       setLoading(false);
     }
@@ -150,19 +201,42 @@ export const SensorDetailScreen = () => {
     }
   };
 
+  // Ordenar leituras por timestamp para o gráfico
+  const sortedReadings = [...readings].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  
+  // Limitar a 8 pontos para melhor legibilidade do gráfico
+  const chartReadings = sortedReadings.slice(-8);
+  
   const chartData = {
-    labels: readings.map(data => new Date(data.timestamp).toLocaleTimeString().split(':').slice(0, 2).join(':')),
+    labels: chartReadings.map((data, index) => {
+      const date = new Date(data.timestamp);
+      // Mostrar apenas algumas horas para evitar sobreposição
+      if (chartReadings.length <= 4) {
+        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      } else {
+        // Para mais pontos, mostrar apenas minutos
+        return `${date.getMinutes().toString().padStart(2, '0')}`;
+      }
+    }),
     datasets: [
       {
-        data: readings.map(data => data.value),
+        data: chartReadings.map(data => data.value),
         color: (opacity = 1) => rgba(0, 122, 255, opacity),
         strokeWidth: 2,
       },
     ],
   };
 
-  const getSensorName = (id: string): string => {
-    switch (id) {
+  // Garantir que o gráfico tenha pelo menos 2 pontos para ser exibido
+  const hasEnoughDataForChart = chartReadings.length >= 2;
+
+  const getSensorDisplayName = (): string => {
+    if (sensor) {
+      return sensor.model ? `${sensor.name} (${sensor.model})` : sensor.name;
+    }
+    
+    // Fallback para casos onde o sensor ainda não foi carregado
+    switch (sensorId) {
       case 'p1':
         return 'Pressão 01 (XGZP701DB1R)';
       case 'p2':
@@ -185,7 +259,45 @@ export const SensorDetailScreen = () => {
   return (
     <ScrollView style={styles.container}>
       <Logo />
-      <Text style={styles.title}>{getSensorName(sensorId)}</Text>
+      <Text style={styles.title}>{getSensorDisplayName()}</Text>
+
+      {/* Informações do sensor */}
+      {sensor && (
+        <View style={styles.sensorInfoContainer}>
+          {sensor.location && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📍 Localização:</Text>
+              <Text style={styles.infoValue}>{sensor.location}</Text>
+            </View>
+          )}
+          {sensor.description && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📝 Descrição:</Text>
+              <Text style={styles.infoValue}>{sensor.description}</Text>
+            </View>
+          )}
+          {sensor.type && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>🔧 Tipo:</Text>
+              <Text style={styles.infoValue}>{sensor.type}</Text>
+            </View>
+          )}
+          {sensor.unit && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📊 Unidade:</Text>
+              <Text style={styles.infoValue}>{sensor.unit}</Text>
+            </View>
+          )}
+          {sensor.minValue !== undefined && sensor.maxValue !== undefined && (
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>📈 Faixa:</Text>
+              <Text style={styles.infoValue}>
+                {sensor.minValue} - {sensor.maxValue} {sensor.unit || ''}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.statusContainer}>
         <Text style={styles.statusLabel}>Status:</Text>
@@ -213,7 +325,7 @@ export const SensorDetailScreen = () => {
         <Text style={styles.chartTitle}>Gráfico de Linha</Text>
         {loading ? (
           <ActivityIndicator size="large" color="#007AFF" />
-        ) : (
+        ) : hasEnoughDataForChart ? (
           <LineChart
             data={chartData}
             width={chartWidth}
@@ -226,19 +338,42 @@ export const SensorDetailScreen = () => {
             withVerticalLines={false}
             withHorizontalLines={true}
             withDots={true}
-            segments={4}
+            segments={3}
+            fromZero={false}
           />
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>
+              {sortedReadings.length === 0 
+                ? 'Nenhuma leitura disponível' 
+                : 'Dados insuficientes para o gráfico (mín. 2 leituras)'}
+            </Text>
+            <Text style={styles.noDataSubtext}>
+              Use o botão "Registrar Leitura" para adicionar dados
+            </Text>
+          </View>
         )}
       </View>
 
       <View style={styles.historyContainer}>
-        <Text style={styles.historyTitle}>Histórico</Text>
-        {readings.map((data, index) => (
-          <View key={index} style={styles.historyItem}>
-            <Text style={styles.historyText}>{new Date(data.timestamp).toLocaleString()}</Text>
-            <Text style={styles.historyText}>{data.value.toFixed(2)}</Text>
+        <Text style={styles.historyTitle}>Histórico ({sortedReadings.length} leituras)</Text>
+        {sortedReadings.length > 0 ? (
+          sortedReadings.map((data, index) => (
+            <View key={data.id || index} style={styles.historyItem}>
+              <Text style={styles.historyText}>{new Date(data.timestamp).toLocaleString()}</Text>
+              <Text style={styles.historyText}>
+                {data.value.toFixed(2)} {sensor?.unit || ''}
+              </Text>
+            </View>
+          ))
+        ) : (
+          <View style={styles.noDataContainer}>
+            <Text style={styles.noDataText}>Nenhuma leitura registrada</Text>
+            <Text style={styles.noDataSubtext}>
+              Use o botão "Registrar Leitura" para adicionar dados
+            </Text>
           </View>
-        ))}
+        )}
       </View>
 
       <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>

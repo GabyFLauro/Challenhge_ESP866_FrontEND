@@ -141,6 +141,36 @@ class ApiClient {
       headers,
     });
   }
+
+  /**
+   * Testa a conectividade com o backend
+   */
+  async testConnection(): Promise<{ success: boolean; message: string; url: string }> {
+    const url = `${this.baseURL}/health`;
+    try {
+      console.log(`🔍 Testando conectividade com backend: ${url}`);
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: this.getHeaders(),
+        signal: AbortSignal.timeout(5000), // Timeout de 5 segundos para teste
+      });
+      
+      if (response.ok) {
+        console.log('✅ Backend está acessível');
+        return { success: true, message: 'Backend acessível', url };
+      } else {
+        console.log(`⚠️ Backend respondeu com status: ${response.status}`);
+        return { success: false, message: `Backend respondeu com status ${response.status}`, url };
+      }
+    } catch (error) {
+      console.log('❌ Erro ao conectar com backend:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'Erro desconhecido', 
+        url 
+      };
+    }
+  }
 }
 
 // Instância singleton do cliente

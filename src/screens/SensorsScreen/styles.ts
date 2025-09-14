@@ -16,6 +16,37 @@ export const styles = StyleSheet.create({
         color: '#FFFFFF',
         flex: 1,
     },
+    backendStatus: {
+        color: '#8E8E93',
+        fontSize: 12,
+        marginTop: 4,
+    },
+    investigateButton: {
+        backgroundColor: '#FF9500',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        alignItems: 'center',
+    },
+    investigateButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
+    },
+    investigationResult: {
+        backgroundColor: '#1C1C1E',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FF9500',
+    },
+    investigationResultText: {
+        color: '#FFFFFF',
+        fontSize: 12,
+        fontFamily: 'monospace',
+        lineHeight: 16,
+    },
     scrollView: {
         flex: 1,
     },
@@ -44,8 +75,25 @@ export const styles = StyleSheet.create({
         color: '#FFFFFF',
         marginBottom: 4,
     },
-    lastUpdate: {
+    sensorLocation: {
         fontSize: 14,
+        color: '#FF9500',
+        marginBottom: 2,
+    },
+    sensorDescription: {
+        fontSize: 13,
+        color: '#AEAEB2',
+        marginBottom: 4,
+        fontStyle: 'italic',
+    },
+    currentValue: {
+        fontSize: 15,
+        color: '#34C759',
+        fontWeight: '600',
+        marginBottom: 4,
+    },
+    lastUpdate: {
+        fontSize: 12,
         color: '#8E8E93',
     },
     statusContainer: {
