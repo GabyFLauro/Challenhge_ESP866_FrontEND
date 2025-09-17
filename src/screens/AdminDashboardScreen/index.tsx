@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, TextStyle, ViewStyle, TouchableOpacity } from 'react-native';
 import { Button, ListItem, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
@@ -10,6 +10,7 @@ import UserManagement from '../../components/UserManagement';
 import { useAuth } from '../../contexts/AuthContext';
 import theme from '../../styles/theme';
 import { RootStackParamList } from '../../types/navigation';
+import { useAdminDashboard } from '../../hooks/useAdminDashboard';
 
 type AdminDashboardScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'AdminDashboard'>;
@@ -62,54 +63,18 @@ const getStatusText = (status: string) => {
 const AdminDashboardScreen: React.FC = () => {
     const { user, signOut } = useAuth();
     const navigation = useNavigation<AdminDashboardScreenProps['navigation']>();
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'appointments' | 'users'>('appointments');
-
-    const loadData = async () => {
-        try {
-            // Carrega consultas
-            const storedAppointments = await AsyncStorage.getItem('@MedicalApp:appointments');
-            if (storedAppointments) {
-                const allAppointments: Appointment[] = JSON.parse(storedAppointments);
-                setAppointments(allAppointments);
-            }
-
-            // Carrega usuários
-            const storedUsers = await AsyncStorage.getItem('@MedicalApp:users');
-            if (storedUsers) {
-                const allUsers: User[] = JSON.parse(storedUsers);
-                setUsers(allUsers);
-            }
-        } catch (error) {
-            console.error('Erro ao carregar dados:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { appointments, users, loading, activeTab, setActiveTab, load, updateAppointmentStatus } = useAdminDashboard();
 
     // Carrega os dados quando a tela estiver em foco
     useFocusEffect(
         React.useCallback(() => {
-            loadData();
-        }, [])
+            load();
+        }, [load])
     );
 
     const handleUpdateStatus = async (appointmentId: string, newStatus: 'confirmed' | 'cancelled') => {
         try {
-            const storedAppointments = await AsyncStorage.getItem('@MedicalApp:appointments');
-            if (storedAppointments) {
-                const allAppointments: Appointment[] = JSON.parse(storedAppointments);
-                const updatedAppointments = allAppointments.map(appointment => {
-                    if (appointment.id === appointmentId) {
-                        return { ...appointment, status: newStatus };
-                    }
-                    return appointment;
-                });
-                await AsyncStorage.setItem('@MedicalApp:appointments', JSON.stringify(updatedAppointments));
-                loadData(); // Recarrega os dados
-            }
+            await updateAppointmentStatus(appointmentId, newStatus);
         } catch (error) {
             console.error('Erro ao atualizar status:', error);
         }

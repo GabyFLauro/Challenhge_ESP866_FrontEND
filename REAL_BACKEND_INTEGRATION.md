@@ -4,7 +4,7 @@
 
 Implementei a integração completa com o backend real do [Challenge Festo Twinovate Backend](https://vscode.dev/github/GabyFLauro/Challenge_Festo_Twinovate_Backend/blob/main). Agora os dados dos sensores vêm diretamente do backend quando disponível.
 
-## 🔧 **Principais Implementações**
+## 🔧 **Principais Implementações (Clean Code + SOLID)**
 
 ### ✅ **1. Configuração da API Atualizada**
 
@@ -25,17 +25,18 @@ export const API_CONFIG = {
 };
 ```
 
-### ✅ **2. Serviços Priorizando Backend Real**
+### ✅ **2. Serviços Priorizando Backend Real com Normalização**
 
 **Serviço de Sensores:** `src/services/sensors.ts`
-- ✅ **Logs detalhados** - Mostra quando está usando backend real vs. fallback
-- ✅ **Tratamento de erros** - Fallback robusto quando backend não está disponível
-- ✅ **Métodos completos** - `list()` e `getById()` com integração real
+- ✅ Normalização de campos (ex.: `nome/modelo/tipo/unidade/valorAtual`) → `SensorDTO`
+- ✅ Logs de estrutura para diagnóstico
+- ✅ Fallback robusto quando backend indisponível
+- ✅ Métodos `list()` e `getById()`
 
 **Serviço de Leituras:** `src/services/readings.ts`
-- ✅ **Integração real** - Busca leituras do backend quando disponível
-- ✅ **Dados simulados** - Fallback inteligente quando backend offline
-- ✅ **Criação de leituras** - POST para backend real
+- ✅ Normalização de campos (ex.: `sensor_id/valor/dataHora`) → `ReadingDTO`
+- ✅ Fallback com mocks realistas
+- ✅ POST com normalização da resposta
 
 ### ✅ **3. Teste de Conectividade**
 
@@ -44,12 +45,12 @@ export const API_CONFIG = {
 - ✅ **Teste de endpoints** - Valida `/sensors` e `/readings`
 - ✅ **Teste completo** - Executa todos os testes automaticamente
 
-### ✅ **4. Interface com Status do Backend**
+### ✅ **4. Interface com Status do Backend (DIP)**
 
 **Tela de Sensores:** `src/screens/SensorsScreen/index.tsx`
-- ✅ **Status visual** - Mostra se backend está conectado
-- ✅ **Indicadores claros** - ✅ Conectado, ⚠️ Offline, ❌ Erro
-- ✅ **Teste automático** - Verifica conectividade ao carregar e atualizar
+- ✅ Usa hook `useSensors` (tela depende de abstrações)
+- ✅ Status visual do backend
+- ✅ Pull-to-refresh com reteste
 
 ## 🚀 **Como Configurar para Backend Real**
 
@@ -128,15 +129,12 @@ Agora você pode acompanhar a integração pelos logs do console:
 2. **Backend Offline** - Dados simulados inteligentes
 3. **Erro de Rede** - Fallback robusto com mensagens claras
 
-## 🔄 **Fluxo de Integração**
+## 🔄 **Fluxo de Integração com Hooks**
 
 ### **1. Carregamento Inicial:**
 ```typescript
 // Testa conectividade
-const testResult = await backendTestService.runFullTest();
-
-// Carrega sensores (real ou fallback)
-const sensors = await sensorsService.list();
+const { listView, backendStatus, refresh } = useSensors();
 ```
 
 ### **2. Atualização:**
@@ -151,10 +149,7 @@ const onRefresh = async () => {
 ### **3. Detalhes do Sensor:**
 ```typescript
 // Busca sensor específico + leituras
-const [sensorData, readingsData] = await Promise.all([
-  sensorsService.getById(sensorId),
-  readingsService.listBySensor(sensorId)
-]);
+const { sensor, readings, status, chartData } = useSensorDetail(sensorId);
 ```
 
 ## 🛠️ **Troubleshooting**

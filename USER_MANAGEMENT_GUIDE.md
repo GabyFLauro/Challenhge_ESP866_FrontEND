@@ -1,45 +1,15 @@
 # Guia Completo do Componente UserManagement
 
-## 📋 **Especificação Implementada**
+## 📋 **Especificação Implementada (com hook useUserManagement)**
 
-### ✅ **Estados do Componente (Conforme Especificado)**
+### ✅ **Estados do Hook**
 ```typescript
-const [users, setUsers] = useState<AdminUser[]>([]);           // Array de usuários carregados da API
-const [loading, setLoading] = useState(true);                  // Controla estado de carregamento
-const [changingPassword, setChangingPassword] = useState<string | null>(null); // ID do usuário que está tendo senha alterada
-const [newPassword, setNewPassword] = useState('');            // Nova senha digitada pelo admin
+const { users, loading, editModalVisible, editUserId, editEmail, editPassword, passwordModalVisible, passwordUserId, newPassword } = useUserManagement();
 ```
 
-### ✅ **Funções Principais (Conforme Especificado)**
+### ✅ **Funções Principais (expostas pelo hook)**
 ```typescript
-// loadUsers(): Carrega usuários da API usando adminApiService
-const loadUsers = async () => {
-  try {
-    setLoading(true);
-    const usersData = await adminApiService.getAllUsers();
-    setUsers(usersData);
-  } catch (error) {
-    Alert.alert('Erro', 'Não foi possível carregar os usuários');
-  } finally {
-    setLoading(false);
-  }
-};
-
-// handleChangePassword(): Valida e envia nova senha para API
-const handleChangePassword = async (userId: string) => {
-  if (!newPassword || newPassword.trim().length < 6) {
-    Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
-    return;
-  }
-  // ... implementação completa
-};
-
-// renderUser(): Renderiza cada usuário como um card
-const renderUser = (user: AdminUser, index: number) => (
-  <UserContainer key={user.id}>
-    {/* ... implementação completa */}
-  </UserContainer>
-);
+const { openEditModal, saveEdit, openPasswordModal, changePassword, removeUser } = useUserManagement();
 ```
 
 ### ✅ **Layout Otimizado (Conforme Especificado)**

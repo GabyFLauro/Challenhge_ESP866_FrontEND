@@ -4,7 +4,7 @@
 
 Foi realizada a integração completa dos dados dos sensores do backend com as telas de sensores disponíveis, expandindo significativamente as informações exibidas.
 
-## 🔧 **Principais Melhorias Implementadas**
+## 🔧 **Principais Melhorias Implementadas (Clean Code + SOLID)**
 
 ### ✅ **1. Interface Sensor Expandida**
 
@@ -37,9 +37,9 @@ export interface Sensor {
 }
 ```
 
-### ✅ **2. Serviço de Sensores Aprimorado**
+### ✅ **2. Serviço de Sensores Aprimorado com Normalização**
 
-**Novos campos do SensorDTO:**
+**Campos do SensorDTO (normalizados):**
 - ✅ `type` - Tipo do sensor (pressure, temperature, vibration, etc.)
 - ✅ `location` - Localização física do sensor
 - ✅ `description` - Descrição detalhada do sensor
@@ -52,7 +52,7 @@ export interface Sensor {
 **Novos métodos:**
 - ✅ `getById(id)` - Buscar sensor específico por ID
 
-### ✅ **3. Tela de Sensores Melhorada**
+### ✅ **3. Tela de Sensores Melhorada (DIP)**
 
 **Informações adicionais nos cards:**
 - ✅ **Localização** - Mostra onde o sensor está instalado
@@ -70,7 +70,7 @@ Valor atual: 5.20 bar
 [STATUS: NORMAL] 🟢
 ```
 
-### ✅ **4. Tela de Detalhes Expandida**
+### ✅ **4. Tela de Detalhes Expandida (DIP)**
 
 **Seção de informações do sensor:**
 - ✅ **📍 Localização** - Onde está instalado
@@ -130,18 +130,15 @@ READINGS_BY_SENSOR: (sensorId: string) => `/readings/${sensorId}`,
    - Unidade: m/s²
    - Faixa: 0-20 m/s²
 
-## 🚀 **Como Funciona a Integração**
+## 🚀 **Como Funciona a Integração com Hooks**
 
 ### **1. Busca de Dados:**
 ```typescript
-// Tela de sensores busca lista completa
-const sensors = await sensorsService.list();
+// Tela de sensores
+const { listView, backendStatus, refresh } = useSensors();
 
-// Tela de detalhes busca sensor específico + leituras
-const [sensorData, readingsData] = await Promise.all([
-  sensorsService.getById(sensorId),
-  readingsService.listBySensor(sensorId)
-]);
+// Tela de detalhes
+const { sensor, readings, status, chartData, hasEnoughDataForChart } = useSensorDetail(sensorId);
 ```
 
 ### **2. Mapeamento de Status:**

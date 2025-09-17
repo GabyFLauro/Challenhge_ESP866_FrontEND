@@ -22,7 +22,8 @@ export const sensorsService = {
   async list(): Promise<SensorDTO[]> {
     try {
       console.log('🔍 Buscando sensores do backend real...');
-      const sensors = await apiClient.get<SensorDTO[]>('/sensors');
+      const raw = await apiClient.get<any[]>('/sensors');
+      const sensors: SensorDTO[] = (raw || []).map(normalizeSensor);
       console.log('✅ Sensores carregados do backend:', sensors.length);
       
       // Log detalhado para debug
@@ -150,7 +151,8 @@ export const sensorsService = {
   async getById(id: string): Promise<SensorDTO | null> {
     try {
       console.log(`🔍 Buscando sensor ${id} do backend real...`);
-      const sensor = await apiClient.get<SensorDTO>(`/sensors/${encodeURIComponent(id)}`);
+      const raw = await apiClient.get<any>(`/sensors/${encodeURIComponent(id)}`);
+      const sensor = normalizeSensor(raw);
       console.log('✅ Sensor carregado do backend:', sensor);
       
       // Log detalhado para debug
@@ -179,4 +181,56 @@ export const sensorsService = {
   },
 };
 
+
+function normalizeSensor(raw: any): SensorDTO {
+  if (!raw || typeof raw !== 'object') {
+    console.warn('⚠️ Sensor inválido recebido do backend:', raw);
+    return {
+      id: String(Date.now()),
+      name: 'Desconhecido',
+    };
+  }
+
+  // Suporte a chaves alternativas em PT-BR
+  const id = raw.id ?? raw.codigo ?? raw.sensorId ?? raw.uuid;
+  const name = raw.name ?? raw.nome ?? raw.titulo ?? `Sensor ${id ?? ''}`;
+  const model = raw.model ?? raw.modelo;
+  const type = raw.type ?? raw.tipo;
+  const location = raw.location ?? raw.localizacao ?? raw.localização;
+  const description = raw.description ?? raw.descricao ?? raw.descrição;
+  const unit = raw.unit ?? raw.unidade;
+  const isActive = raw.isActive ?? raw.ativo ?? raw.status === 'ATIVO' ? true : raw.status === 'INATIVO' ? false : undefined;
+  const minValue = raw.minValue ?? raw.valorMinimo ?? raw.minimo;
+  const maxValue = raw.maxValue ?? raw.valorMaximo ?? raw.maximo;
+  const currentValue = raw.currentValue ?? raw.valorAtual ?? raw.valor ?? raw.ultimoValor;
+
+  // lastReading pode vir como objeto ou campos soltos
+  const lastReadingObj = raw.lastReading ?? raw.ultimaLeitura ?? raw.ultima_leitura;
+  const lastReading: SensorDTO['lastReading'] | undefined = lastReadingObj
+    ? {
+        value: lastReadingObj.value ?? lastReadingObj.valor ?? currentValue,
+        timestamp: lastReadingObj.timestamp ?? lastReadingObj.dataHora ?? lastReadingObj.data_hora ?? new Date().toISOString(),
+      }
+    : (raw.ultimoValor || raw.ultimoHorario || raw.ultimo_horario)
+      ? {
+          value: raw.ultimoValor ?? currentValue,
+          timestamp: raw.ultimoHorario ?? raw.ultimo_horario,
+        }
+      : undefined;
+
+  return {
+    id: String(id ?? ''),
+    name: String(name ?? 'Sensor'),
+    model: model !== undefined ? String(model) : undefined,
+    type: type !== undefined ? String(type) : undefined,
+    location: location !== undefined ? String(location) : undefined,
+    description: description !== undefined ? String(description) : undefined,
+    unit: unit !== undefined ? String(unit) : undefined,
+    isActive: isActive,
+    minValue: typeof minValue === 'number' ? minValue : minValue !== undefined ? Number(minValue) : undefined,
+    maxValue: typeof maxValue === 'number' ? maxValue : maxValue !== undefined ? Number(maxValue) : undefined,
+    currentValue: typeof currentValue === 'number' ? currentValue : currentValue !== undefined ? Number(currentValue) : undefined,
+    lastReading,
+  };
+}
 

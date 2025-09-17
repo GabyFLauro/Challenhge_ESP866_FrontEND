@@ -1,6 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, TextStyle, ViewStyle } from 'react-native';
 import { Button, ListItem } from 'react-native-elements';
 import styled from 'styled-components/native';
@@ -11,6 +11,7 @@ import { RootStackParamList } from '../../types/navigation';
 import { styles } from './styles';
 import { appointmentsService, Appointment } from '../../services/appointments';
 import { StyledProps } from './interfaces/stylesprops';
+import { useDoctorDashboard } from '../../hooks/useDoctorDashboard';
 
 type DoctorDashboardScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'DoctorDashboard'>;
@@ -41,35 +42,13 @@ const getStatusText = (status: string) => {
 const DoctorDashboardScreen: React.FC = () => {
     const { user, signOut } = useAuth();
     const navigation = useNavigation<DoctorDashboardScreenProps['navigation']>();
-    const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    const loadAppointments = async () => {
-        try {
-            if (!user) return;
-            const doctorAppointments = await appointmentsService.listByDoctor(user.id);
-            setAppointments(doctorAppointments);
-        } catch (error) {
-            console.error('Erro ao carregar consultas:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleUpdateStatus = async (appointmentId: string, newStatus: 'confirmed' | 'cancelled') => {
-        try {
-            await appointmentsService.updateStatus(appointmentId, newStatus);
-            await loadAppointments();
-        } catch (error) {
-            console.error('Erro ao atualizar status:', error);
-        }
-    };
+    const { appointments, loading, load, updateStatus } = useDoctorDashboard(user?.id);
 
     // Carrega as consultas quando a tela estiver em foco
     useFocusEffect(
         React.useCallback(() => {
-            loadAppointments();
-        }, [])
+            load();
+        }, [load])
     );
 
     return (
@@ -105,13 +84,13 @@ const DoctorDashboardScreen: React.FC = () => {
                                     <ButtonContainer>
                                         <Button
                                             title="Confirmar"
-                                            onPress={() => handleUpdateStatus(appointment.id, 'confirmed')}
+                                            onPress={() => updateStatus(appointment.id, 'confirmed')}
                                             containerStyle={styles.actionButton as ViewStyle}
                                             buttonStyle={styles.confirmButton}
                                         />
                                         <Button
                                             title="Cancelar"
-                                            onPress={() => handleUpdateStatus(appointment.id, 'cancelled')}
+                                            onPress={() => updateStatus(appointment.id, 'cancelled')}
                                             containerStyle={styles.actionButton as ViewStyle}
                                             buttonStyle={styles.cancelButton}
                                         />

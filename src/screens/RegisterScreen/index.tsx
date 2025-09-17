@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
@@ -9,51 +9,15 @@ import theme from '../../styles/theme';
 import { RootStackParamList } from '../../types/navigation';
 import { Logo } from '../../components/Logo';
 import { styles } from './styles';
+import { useRegister } from '../../hooks/useRegister';
 
 type RegisterScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
 };
 
 const RegisterScreen: React.FC = () => {
-    const { register } = useAuth();
     const navigation = useNavigation<RegisterScreenProps['navigation']>();
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [userType, setUserType] = useState<'USER' | 'ADMIN'>('USER');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleRegister = async () => {
-        if (!name || !email || !password || !confirmPassword) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos');
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            Alert.alert('Erro', 'As senhas não coincidem');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            await register({
-                name,
-                email,
-                password,
-                userType,
-            });
-            Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-            navigation.navigate('Login');
-        } catch (err) {
-            const message = err instanceof Error && err.message ? err.message : 'Erro ao criar conta. Tente novamente.';
-            setError(message);
-            Alert.alert('Erro', message);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { name, email, password, confirmPassword, userType, loading, error, setName, setEmail, setPassword, setConfirmPassword, setUserType, submit } = useRegister();
 
     return (
         <ScrollView style={styles.container}>
@@ -125,7 +89,7 @@ const RegisterScreen: React.FC = () => {
 
                 <Button
                     title="Cadastrar"
-                    onPress={handleRegister}
+                    onPress={submit}
                     loading={loading}
                     containerStyle={styles.button}
                 />

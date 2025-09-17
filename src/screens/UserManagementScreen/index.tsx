@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator, Alert, TouchableOpacity, Modal, TextInput } from 'react-native';
 import { Text, ListItem, Avatar, Icon, Button } from 'react-native-elements';
 import { authService } from '../../services/auth';
@@ -6,41 +6,17 @@ import { adminApiService, AdminUser } from '../../services/adminApi';
 import { useAuth } from '../../contexts/AuthContext';
 import theme from '../../styles/theme';
 import { styles } from './styles';
+import { useUserManagement } from '../../hooks/useUserManagement';
 
 const UserManagementScreen: React.FC = () => {
   const { user: currentUser } = useAuth();
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editUserId, setEditUserId] = useState<string | null>(null);
-  const [editEmail, setEditEmail] = useState('');
-  const [editPassword, setEditPassword] = useState('');
-  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
-  const [passwordUserId, setPasswordUserId] = useState<string | null>(null);
-  const [newPassword, setNewPassword] = useState('');
+  const { users, loading, editModalVisible, editUserId, editEmail, editPassword, passwordModalVisible, passwordUserId, newPassword, setEditModalVisible, setEditEmail, setEditPassword, setPasswordModalVisible, setNewPassword, openEditModal, saveEdit, openPasswordModal, changePassword, removeUser } = useUserManagement();
 
   const getRoleLabel = (role: string) => {
     if (role === 'admin') return 'Administrador';
     if (role === 'patient') return 'Usuário Comum';
     return role;
   };
-
-  const fetchUsers = async () => {
-    setLoading(true);
-    try {
-      const allUsers = await adminApiService.getAllUsers();
-      setUsers(allUsers);
-    } catch (error) {
-      console.error('Erro ao carregar usuários:', error);
-      Alert.alert('Erro', 'Erro ao carregar usuários');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
 
   const handleDelete = async (userId: string) => {
     Alert.alert(
@@ -53,8 +29,7 @@ const UserManagementScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
-              await adminApiService.deleteUser(userId);
-              fetchUsers();
+              await removeUser(userId);
               Alert.alert('Sucesso', 'Usuário excluído com sucesso!');
             } catch (error) {
               Alert.alert('Erro', 'Erro ao excluir usuário');
@@ -65,56 +40,22 @@ const UserManagementScreen: React.FC = () => {
     );
   };
 
-  const openEditModal = (user: AdminUser) => {
-    setEditUserId(user.id);
-    setEditEmail(user.email);
-    setEditPassword('');
-    setEditModalVisible(true);
-  };
-
   const handleEditSave = async () => {
-    if (!editUserId) return;
     try {
-      const userData: any = {
-        email: editEmail,
-      };
-      
-      if (editPassword && editPassword.trim() !== '') {
-        userData.senha = editPassword;
-      }
-      
-      await adminApiService.editUser(editUserId, userData);
-      setEditModalVisible(false);
-      setEditUserId(null);
-      setEditEmail('');
-      setEditPassword('');
-      fetchUsers();
+      await saveEdit();
       Alert.alert('Sucesso', 'Usuário atualizado com sucesso!');
     } catch (error) {
       Alert.alert('Erro', 'Erro ao atualizar usuário');
     }
   };
 
-  const openPasswordModal = (user: AdminUser) => {
-    setPasswordUserId(user.id);
-    setNewPassword('');
-    setPasswordModalVisible(true);
-  };
-
   const handlePasswordChange = async () => {
-    if (!passwordUserId || !newPassword.trim()) {
+    if (!newPassword.trim()) {
       Alert.alert('Erro', 'Nova senha é obrigatória');
       return;
     }
-
     try {
-      await adminApiService.changeUserPassword({ 
-        userId: passwordUserId, 
-        newPassword: newPassword 
-      });
-      setPasswordModalVisible(false);
-      setPasswordUserId(null);
-      setNewPassword('');
+      await changePassword();
       Alert.alert('Sucesso', 'Senha alterada com sucesso!');
     } catch (error) {
       Alert.alert('Erro', 'Erro ao alterar senha');

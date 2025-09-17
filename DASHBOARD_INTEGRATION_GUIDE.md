@@ -2,7 +2,7 @@
 
 ## 🎯 **Implementações Realizadas**
 
-### ✅ **1. AdminDashboardScreen - Sistema de Abas**
+### ✅ **1. AdminDashboardScreen - Sistema de Abas (DIP com hook)**
 
 #### **ANTES: Dashboard só mostrava consultas**
 ```typescript
@@ -19,7 +19,7 @@ return (
 #### **DEPOIS: Sistema de abas com gerenciamento de usuários**
 ```typescript
 // Dashboard com sistema de abas moderno
-const [activeTab, setActiveTab] = useState<'appointments' | 'users'>('appointments');
+const { activeTab, setActiveTab, load } = useAdminDashboard();
 
 return (
   <Container>
@@ -49,7 +49,7 @@ return (
 - ✅ **`TabButton`**: Botão que muda de cor baseado no estado ativo
 - ✅ **`TabButtonText`**: Texto que muda de cor baseado no estado ativo
 
-### ✅ **2. RegisterScreen - Cadastro como Admin ou Paciente**
+### ✅ **2. RegisterScreen - Cadastro como Admin ou Paciente (hook)**
 
 #### **ANTES: Cadastro apenas como paciente**
 ```typescript
@@ -64,7 +64,7 @@ await register({
 #### **DEPOIS: Cadastro como admin ou paciente**
 ```typescript
 // Cadastro com seleção de tipo de usuário
-const [userType, setUserType] = useState<'PACIENTE' | 'ADMIN'>('PACIENTE');
+const { userType, setUserType, submit } = useRegister();
 
 await register({
   name,
@@ -131,7 +131,7 @@ GET /usuarios
 ]
 ```
 
-### ✅ **Mapeamento de Dados:**
+### ✅ **Mapeamento de Dados (normalização):**
 ```typescript
 // Backend → Frontend
 {

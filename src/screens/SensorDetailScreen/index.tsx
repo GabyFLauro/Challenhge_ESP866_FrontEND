@@ -1,12 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions, ActivityIndicator, Alert } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../../components/Logo';
 import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
-import { readingsService, ReadingDTO } from '../../services/readings';
-import { sensorsService, SensorDTO } from '../../services/sensors';
+import { readingsService } from '../../services/readings';
+import { useSensorDetail } from '../../hooks/useSensorDetail';
 
 // Função auxiliar para cores RGBA
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
@@ -55,81 +55,10 @@ export const SensorDetailScreen = () => {
   const { sensorId } = route.params as { sensorId: string };
   const { width: screenWidth } = useWindowDimensions();
   const { width: chartWidth, height: chartHeight, fontSize: chartFontSize } = getChartDimensions(screenWidth);
+  const { sensor, readings, loading, error, status, chartData, sortedReadings, hasEnoughDataForChart, load } = useSensorDetail(sensorId);
+  const [posting, setPosting] = React.useState<boolean>(false);
 
-  const [readings, setReadings] = useState<ReadingDTO[]>([]);
-  const [sensor, setSensor] = useState<SensorDTO | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [posting, setPosting] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const status: Status = useMemo(() => {
-    if (readings.length === 0) return 'ok';
-    
-    // Ordenar leituras por timestamp (mais recente primeiro)
-    const sortedReadings = [...readings].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    const last = sortedReadings[0];
-    
-    if (!last) return 'ok';
-    
-    // Lógica de status baseada no tipo de sensor e valores
-    if (sensor) {
-      const { minValue, maxValue, type } = sensor;
-      
-      if (type === 'limit_switch') {
-        return last.value === 1 ? 'ok' : 'warning';
-      }
-      
-      if (minValue !== undefined && maxValue !== undefined) {
-        const range = maxValue - minValue;
-        const warningThreshold = maxValue - (range * 0.1); // 90% da faixa máxima
-        const errorThreshold = maxValue - (range * 0.05); // 95% da faixa máxima
-        
-        if (last.value >= errorThreshold) return 'error';
-        if (last.value >= warningThreshold) return 'warning';
-        return 'ok';
-      }
-    }
-    
-    // Fallback para lógica antiga
-    return last.value >= 80 ? 'error' : last.value >= 60 ? 'warning' : 'ok';
-  }, [readings, sensor]);
-
-  const load = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log(`🔍 Carregando dados para sensor: ${sensorId}`);
-      
-      // Buscar dados do sensor e leituras em paralelo
-      const [sensorData, readingsData] = await Promise.all([
-        sensorsService.getById(sensorId),
-        readingsService.listBySensor(sensorId)
-      ]);
-      
-      console.log(`📊 Sensor carregado:`, sensorData);
-      console.log(`📈 Leituras carregadas: ${readingsData.length} leituras`);
-      
-      setSensor(sensorData);
-      setReadings(readingsData);
-      
-      if (readingsData.length === 0) {
-        console.log('⚠️ Nenhuma leitura encontrada para este sensor');
-      }
-    } catch (e) {
-      console.error('❌ Erro ao carregar dados do sensor:', e);
-      setError(e instanceof Error ? e.message : 'Falha ao buscar dados do sensor');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    load();
-  }, [sensorId]);
-
-  const handleUpdate = () => {
-    load();
-  };
+  const handleUpdate = () => { load(); };
 
   const randomInRange = (min: number, max: number, decimals = 2) => {
     const n = Math.random() * (max - min) + min;
@@ -201,34 +130,7 @@ export const SensorDetailScreen = () => {
     }
   };
 
-  // Ordenar leituras por timestamp para o gráfico
-  const sortedReadings = [...readings].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-  
-  // Limitar a 8 pontos para melhor legibilidade do gráfico
-  const chartReadings = sortedReadings.slice(-8);
-  
-  const chartData = {
-    labels: chartReadings.map((data, index) => {
-      const date = new Date(data.timestamp);
-      // Mostrar apenas algumas horas para evitar sobreposição
-      if (chartReadings.length <= 4) {
-        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      } else {
-        // Para mais pontos, mostrar apenas minutos
-        return `${date.getMinutes().toString().padStart(2, '0')}`;
-      }
-    }),
-    datasets: [
-      {
-        data: chartReadings.map(data => data.value),
-        color: (opacity = 1) => rgba(0, 122, 255, opacity),
-        strokeWidth: 2,
-      },
-    ],
-  };
-
-  // Garantir que o gráfico tenha pelo menos 2 pontos para ser exibido
-  const hasEnoughDataForChart = chartReadings.length >= 2;
+  // chartData, sortedReadings e hasEnoughDataForChart vêm do hook
 
   const getSensorDisplayName = (): string => {
     if (sensor) {
@@ -344,7 +246,7 @@ export const SensorDetailScreen = () => {
         ) : (
           <View style={styles.noDataContainer}>
             <Text style={styles.noDataText}>
-              {sortedReadings.length === 0 
+            {sortedReadings.length === 0 
                 ? 'Nenhuma leitura disponível' 
                 : 'Dados insuficientes para o gráfico (mín. 2 leituras)'}
             </Text>

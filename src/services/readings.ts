@@ -62,7 +62,8 @@ export const readingsService = {
   async list(): Promise<ReadingDTO[]> {
     try {
       console.log('🔍 Buscando todas as leituras do backend real...');
-      const readings = await apiClient.get<ReadingDTO[]>(READINGS_BASE);
+      const raw = await apiClient.get<any[]>(READINGS_BASE);
+      const readings = (raw || []).map(normalizeReading);
       console.log('✅ Leituras carregadas do backend:', readings.length);
       return readings;
     } catch (e) {
@@ -80,7 +81,8 @@ export const readingsService = {
   async listBySensor(sensorId: string): Promise<ReadingDTO[]> {
     try {
       console.log(`🔍 Buscando leituras para sensor ${sensorId} do backend real...`);
-      const readings = await apiClient.get<ReadingDTO[]>(`${READINGS_BASE}/${encodeURIComponent(sensorId)}`);
+      const raw = await apiClient.get<any[]>(`${READINGS_BASE}/${encodeURIComponent(sensorId)}`);
+      const readings = (raw || []).map(normalizeReading);
       console.log(`✅ Leituras do sensor ${sensorId} carregadas do backend:`, readings.length);
       return readings;
     } catch (e) {
@@ -93,7 +95,8 @@ export const readingsService = {
   async create(data: CreateReadingDTO): Promise<ReadingDTO> {
     try {
       console.log('📝 Criando nova leitura no backend real:', data);
-      const reading = await apiClient.post<ReadingDTO>(READINGS_BASE, data);
+      const raw = await apiClient.post<any>(READINGS_BASE, data);
+      const reading = normalizeReading(raw);
       console.log('✅ Leitura criada com sucesso no backend:', reading);
       return reading;
     } catch (e) {
@@ -109,5 +112,29 @@ export const readingsService = {
     }
   },
 };
+
+function normalizeReading(raw: any): ReadingDTO {
+  if (!raw || typeof raw !== 'object') {
+    console.warn('⚠️ Leitura inválida recebida do backend:', raw);
+    return {
+      id: `reading_${Date.now()}`,
+      sensorId: 'unknown',
+      value: 0,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  const id = raw.id ?? raw.codigo ?? raw.uuid ?? `${raw.sensorId ?? raw.sensor_id ?? 's'}_${raw.timestamp ?? raw.dataHora ?? raw.data_hora ?? Date.now()}`;
+  const sensorId = raw.sensorId ?? raw.sensor_id ?? raw.idSensor ?? raw.codigoSensor;
+  const value = raw.value ?? raw.valor ?? raw.medida ?? raw.leitura;
+  const timestamp = raw.timestamp ?? raw.dataHora ?? raw.data_hora ?? raw.createdAt ?? raw.criadoEm;
+
+  return {
+    id: String(id),
+    sensorId: String(sensorId ?? 'unknown'),
+    value: typeof value === 'number' ? value : value !== undefined ? Number(value) : 0,
+    timestamp: new Date(timestamp ?? Date.now()).toISOString(),
+  };
+}
 
 

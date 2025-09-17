@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
@@ -9,36 +9,15 @@ import theme from '../../styles/theme';
 import { RootStackParamList } from '../../types/navigation';
 import { Logo } from '../../components/Logo';
 import { styles } from './styles';
+import { useLogin } from '../../hooks/useLogin';
 
 type LoginScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
 };
 
 const LoginScreen: React.FC = () => {
-    const { signIn } = useAuth();
     const navigation = useNavigation<LoginScreenProps['navigation']>();
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos');
-            return;
-        }
-
-        setLoading(true);
-        setError('');
-        try {
-            await signIn({ email, password });
-            navigation.navigate('Sensors');
-        } catch (error) {
-            setError('Email ou senha inválidos');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { email, password, setEmail, setPassword, loading, error, submit } = useLogin();
 
     return (
         <Container>
@@ -71,7 +50,7 @@ const LoginScreen: React.FC = () => {
 
                 <Button
                     title="Entrar"
-                    onPress={handleLogin}
+                    onPress={submit}
                     loading={loading}
                     containerStyle={styles.button}
                 />

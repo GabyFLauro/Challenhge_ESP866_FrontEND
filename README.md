@@ -11,7 +11,35 @@ Luis Felipe Machareth Bannwart RM: 99879
 
 Caio Yudi Ozaki Godinho RM: 552505
 
-Para rodar no emulador/simulador abrir o terminal e escrever o comando 'npm install' depois de instalar tudo escrever o comando 'npx expo start' e depois apertar o 'w'. Isso abrirá o emulador em uma aba de pesquisa.
+Como rodar
+- Instalar dependências: `npm install`
+- Iniciar app: `npx expo start` e teclar `w` para Web
+- Para dispositivo/emulador, use a interface do Expo conforme seu ambiente
 
-Se quiser testar em um simulador de celular no Visual Code Studio. Pesquise na aba de extensões no VSC Mobile View e instale. Ao instalar na aba lateral do VSC aparecerá um ícone de celular clique nele e selecione o modelo de celular desejado. Depois pegue a URL da aba de pesquisa aberta, copie e cole no local indicado após clicar em modelo. Com isso será simulado app no celular.
+Configuração do backend
+- Ajuste a URL base em `src/config/api.ts` (Android emulador troca automaticamente localhost→10.0.2.2)
+- Endpoints esperados: `/sensors`, `/sensors/{id}`, `/readings`, `/readings/{sensorId}`, `/usuarios/*`
+
+Arquitetura (Clean Code + SOLID)
+- Telas focadas em UI; lógica de dados em hooks; transformações/validações em utils
+- Hooks principais:
+  - `src/hooks/useSensors.ts`, `src/hooks/useSensorDetail.ts`
+  - `src/hooks/useLogin.ts`, `src/hooks/useRegister.ts`
+  - `src/hooks/useUserManagement.ts`, `src/hooks/useAdminDashboard.ts`, `src/hooks/useDoctorDashboard.ts`
+- Utils:
+  - `src/utils/sensors.ts` (mapeamento DTO→View, status, gráfico)
+  - `src/utils/validation.ts` (email, senha, mensagens)
+- Serviços: `src/services/*` (API client, sensores, leituras, autenticação, admin)
+
+Princípios aplicados
+- SRP: responsabilidades únicas por arquivo (telas, hooks, utils, serviços)
+- OCP: regras extensíveis nos utils/hooks sem alterar telas
+- LSP/ISP: contratos simples nos hooks e componentes
+- DIP: telas dependem de abstrações (hooks/utilitários), não de detalhes de API
+
+Docs complementares
+- Guia unificado para devs: `DEVELOPER_GUIDE.md`
+- Integração backend: `REAL_BACKEND_INTEGRATION.md`
+- Sensores + leituras: `SENSOR_BACKEND_INTEGRATION.md`
+- Dashboard e usuários: `DASHBOARD_INTEGRATION_GUIDE.md`, `USER_MANAGEMENT_GUIDE.md`
 
