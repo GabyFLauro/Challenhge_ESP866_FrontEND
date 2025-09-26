@@ -15,7 +15,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Sensors'>;
 
 export const SensorsScreen = () => {
     const navigation = useNavigation<NavigationProp>();
-  const { listView: sensors, loading, refreshing, error, backendStatus, investigationResult, investigateBackend, refresh } = useSensors();
+    const { listView: sensors, loading, refreshing, error, refresh } = useSensors();
 
     const getStatusColor = (status: Sensor['status']) => {
         switch (status) {
@@ -48,18 +48,8 @@ export const SensorsScreen = () => {
             <Logo />
             <View style={styles.header}>
                 <Text h4 style={styles.title}>Sensores Disponíveis</Text>
-                <Text style={styles.backendStatus}>{backendStatus}</Text>
             </View>
             
-            <TouchableOpacity style={styles.investigateButton} onPress={investigateBackend}>
-                <Text style={styles.investigateButtonText}>🔍 Investigar Backend</Text>
-            </TouchableOpacity>
-            
-            {investigationResult && (
-                <View style={styles.investigationResult}>
-                    <Text style={styles.investigationResultText}>{investigationResult}</Text>
-                </View>
-            )}
             {loading ? (
                 <ActivityIndicator size="large" color="#007AFF" />
             ) : (
@@ -67,40 +57,44 @@ export const SensorsScreen = () => {
                 {error && (
                     <Text style={{ color: '#FF3B30', marginBottom: 8 }}>{error}</Text>
                 )}
-                {sensors.map((sensor) => (
-                    <TouchableOpacity
-                        key={sensor.id}
-                        style={styles.sensorCard}
-                        onPress={() => navigation.navigate('SensorDetail', { sensorId: sensor.id })}
-                    >
-                        <View style={styles.sensorInfo}>
-                            <Text style={styles.sensorName}>{sensor.name}</Text>
-                            {sensor.location && (
-                                <Text style={styles.sensorLocation}>📍 {sensor.location}</Text>
-                            )}
-                            {sensor.description && (
-                                <Text style={styles.sensorDescription}>{sensor.description}</Text>
-                            )}
-                            {sensor.currentValue !== undefined && (
-                                <Text style={styles.currentValue}>
-                                    Valor atual: {sensor.currentValue.toFixed(2)} {sensor.unit || ''}
+                {sensors.map((sensor) => {
+                    let statusLabel = 'CRÍTICO';
+                    if (sensor.status === 'ok') statusLabel = 'NORMAL';
+                    else if (sensor.status === 'warning') statusLabel = 'ALERTA';
+                    return (
+                        <TouchableOpacity
+                            key={sensor.id}
+                            style={styles.sensorCard}
+                            onPress={() => navigation.navigate('SensorDetail', { sensorId: sensor.id })}
+                        >
+                            <View style={styles.sensorInfo}>
+                                <Text style={styles.sensorName}>{sensor.name}</Text>
+                                {sensor.location && (
+                                    <Text style={styles.sensorLocation}>📍 {sensor.location}</Text>
+                                )}
+                                {sensor.description && (
+                                    <Text style={styles.sensorDescription}>{sensor.description}</Text>
+                                )}
+                                {sensor.currentValue !== undefined && (
+                                    <Text style={styles.currentValue}>
+                                        Valor atual: {sensor.currentValue.toFixed(2)} {sensor.unit || ''}
+                                    </Text>
+                                )}
+                                <Text style={styles.lastUpdate}>Última atualização: {sensor.lastUpdate}</Text>
+                            </View>
+                            <View style={styles.statusContainer}>
+                                <Ionicons 
+                                    name={getStatusIcon(sensor.status)} 
+                                    size={24} 
+                                    color={getStatusColor(sensor.status)} 
+                                />
+                                <Text style={[styles.status, { color: getStatusColor(sensor.status) }]}> 
+                                    {statusLabel}
                                 </Text>
-                            )}
-                            <Text style={styles.lastUpdate}>Última atualização: {sensor.lastUpdate}</Text>
-                        </View>
-                        <View style={styles.statusContainer}>
-                            <Ionicons 
-                                name={getStatusIcon(sensor.status)} 
-                                size={24} 
-                                color={getStatusColor(sensor.status)} 
-                            />
-                            <Text style={[styles.status, { color: getStatusColor(sensor.status) }]}>
-                                {sensor.status === 'ok' ? 'NORMAL' : 
-                                 sensor.status === 'warning' ? 'ALERTA' : 'CRÍTICO'}
-                            </Text>
-                        </View>
-                    </TouchableOpacity>
-                ))}
+                            </View>
+                        </TouchableOpacity>
+                    );
+                })}
             </ScrollView>
             )}
         </View>
