@@ -7,25 +7,17 @@
  * @property Login - Tela de login
  * @property Register - Tela de registro
  * @property Home - Tela inicial da aplicação
- * @property CreateAppointment - Tela de criação de consulta
- * @property Profile - Tela de perfil do usuário
- * @property AdminDashboard - Tela do painel de administração
- * @property DoctorDashboard - Tela do painel do médico
- * @property PatientDashboard - Tela do painel do paciente
- * @property UserManagement - Tela de gerenciamento de usuários
+ * @property Sensors - Tela de sensores
+ * @property SensorDetail - Tela de detalhes de um sensor
+ * @property AccountSettings - Tela de configurações da conta
+ * @property DrawerNavigator - Navegador de gaveta
  */
 export type RootStackParamList = {
     Login: undefined;
     Register: undefined;
     Home: undefined;
-    CreateAppointment: undefined;
-    Profile: undefined;
-    AdminDashboard: undefined;
-    DoctorDashboard: undefined;
-    PatientDashboard: undefined;
     Sensors: undefined;
     SensorDetail: { sensorId: string };
     AccountSettings: undefined;
     DrawerNavigator: undefined;
-    UserManagement: undefined;
 };

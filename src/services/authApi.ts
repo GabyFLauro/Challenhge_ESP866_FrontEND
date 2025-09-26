@@ -24,7 +24,32 @@ interface ApiUser {
     nome: string;
     email: string;
     tipo: 'ADMIN' | 'MEDICO' | 'PACIENTE';
-    especialidade?: string;
+}
+
+// Função utilitária para extrair o id do usuário (sub) do token JWT
+function getUserIdFromToken(token: string): string | null {
+    try {
+        const base64Url = token.split('.')[1];
+        // Decodificação base64 compatível cross-platform
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+        let decoded: string;
+        if (typeof Buffer !== 'undefined') {
+            // Node.js/React Native
+            decoded = Buffer.from(padded, 'base64').toString('utf-8');
+        } else if (typeof window !== 'undefined' && window.atob) {
+            // Browser
+            decoded = decodeURIComponent(Array.prototype.map.call(window.atob(padded), (c: string) =>
+                '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            ).join(''));
+        } else {
+            throw new Error('Base64 decode not supported');
+        }
+        const payload = JSON.parse(decoded);
+        return payload.sub || null;
+    } catch {
+        return null;
+    }
 }
 
 /**
@@ -36,6 +61,11 @@ export const authApiService = {
      */
     async signIn(credentials: LoginCredentials): Promise<AuthResponse> {
         try {
+            console.log('Tentando login com:', { email: credentials.email, senha: credentials.password });
+            console.log('Corpo da requisição (login):', {
+                email: credentials.email,
+                senha: credentials.password,
+            });
             // Faz a requisição de login
             const loginResponse = await apiClient.post<ApiLoginResponse>(
                 API_ENDPOINTS.LOGIN,
@@ -44,22 +74,28 @@ export const authApiService = {
                     senha: credentials.password,
                 }
             );
+            console.log('Resposta do backend (login):', loginResponse);
 
-            // Define o token no cliente da API
+            // Salva token e define no cliente da API antes de buscar o usuário
+            await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, loginResponse.token);
             apiClient.setToken(loginResponse.token);
 
-            // Busca os dados do usuário (usa email como dica para fallback)
-            const userData = await this.getCurrentUser(credentials.email);
+            // Agora busca os dados do usuário logado
+            const userData = await this.getCurrentUser();
 
-            // Salva token e usuário no AsyncStorage
-            await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, loginResponse.token);
+            // Salva usuário no AsyncStorage
             await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(userData));
 
             return {
                 user: userData,
                 token: loginResponse.token,
             };
-        } catch (error) {
+        } catch (error: any) {
+            if (error.response?.data) {
+                console.error('Erro detalhado do backend (login):', error.response.data);
+            } else if (error.message) {
+                console.error('Erro detalhado do backend (login):', error.message);
+            }
             const message = error instanceof Error && error.message ? error.message : 'Email ou senha inválidos';
             console.error('Erro no login:', message);
             throw new Error(message);
@@ -72,11 +108,10 @@ export const authApiService = {
     async register(data: RegisterData): Promise<AuthResponse> {
         try {
             // Cria o usuário
-            const newUser = await apiClient.post<ApiUser>(API_ENDPOINTS.REGISTER, {
+            await apiClient.post<ApiUser>(API_ENDPOINTS.REGISTER, {
                 nome: data.name,
                 email: data.email,
-                senha: data.password,
-                tipo: data.userType === 'ADMIN' ? 'ADMIN' : 'PACIENTE',
+                senha: data.password
             });
 
             // Faz login automaticamente após o registro
@@ -84,7 +119,10 @@ export const authApiService = {
                 email: data.email,
                 password: data.password,
             });
-        } catch (error) {
+        } catch (error: any) {
+            if (error?.response?.data) {
+                console.error('Erro detalhado do backend:', error.response.data);
+            }
             const message = error instanceof Error && error.message ? error.message : 'Erro ao criar conta. Verifique se o email já não está em uso.';
             console.error('Erro no registro:', message);
             throw new Error(message);
@@ -94,90 +132,20 @@ export const authApiService = {
     /**
      * Obtém os dados do usuário atual baseado no token JWT
      */
-    async getCurrentUser(emailHint?: string): Promise<User> {
+    async getCurrentUser(): Promise<User> {
         try {
-            // Preferência: tentar endpoint dedicado; se indisponível, cai para lista e match por email
-            try {
-                const currentUser = await apiClient.get<ApiUser>(API_ENDPOINTS.CURRENT_USER);
-                return this.mapApiUserToUser(currentUser);
-            } catch (e) {
-                // Fallback: busca por email na lista
-                const storedTokenUser = await this.getStoredUser();
-                const allUsers = await apiClient.get<ApiUser[]>(API_ENDPOINTS.USERS);
-                const targetEmail = (emailHint || storedTokenUser?.email || '').toLowerCase();
-                const matched = targetEmail
-                  ? allUsers.find(u => (u.email || '').toLowerCase() === targetEmail)
-                  : undefined;
-                if (!matched) {
-                    throw e instanceof Error ? e : new Error('Usuário não encontrado');
-                }
-                return this.mapApiUserToUser(matched);
-            }
+            // Recupera o token salvo
+            const token = await AsyncStorage.getItem(STORAGE_KEYS.TOKEN);
+            if (!token) throw new Error('Token não encontrado');
+            // Decodifica o token JWT para extrair o id do usuário (sub)
+            const userId = getUserIdFromToken(token);
+            if (!userId) throw new Error('ID do usuário não encontrado no token');
+            // Busca o usuário pelo ID
+            const apiUser = await apiClient.get<ApiUser>(API_ENDPOINTS.USER_BY_ID(userId));
+            return this.mapApiUserToUser(apiUser);
         } catch (error) {
             console.error('Erro ao buscar usuário atual:', error);
             throw new Error('Erro ao carregar dados do usuário');
-        }
-    },
-
-    /**
-     * Busca todos os médicos
-     */
-    async getAllDoctors(): Promise<User[]> {
-        try {
-            console.log('Buscando médicos da API...');
-            const doctors = await apiClient.get<ApiUser[]>(API_ENDPOINTS.DOCTORS);
-            console.log('Médicos encontrados:', doctors);
-            return doctors.map(this.mapApiUserToUser);
-        } catch (error) {
-            console.error('Erro detalhado ao buscar médicos:', error);
-            // Tenta buscar todos os usuários e filtrar os médicos como fallback
-            try {
-                console.log('Tentando buscar usuários e filtrar médicos...');
-                const allUsers = await apiClient.get<ApiUser[]>(API_ENDPOINTS.USERS);
-                const doctors = allUsers.filter(user => user.tipoUsuario === 'MEDICO');
-                console.log('Médicos filtrados:', doctors);
-                return doctors.map(this.mapApiUserToUser);
-            } catch (fallbackError) {
-                console.error('Erro no fallback:', fallbackError);
-                console.log('Usando dados mockados como último recurso...');
-                // Fallback para dados mockados quando a API não está disponível
-                return this.getMockDoctors();
-            }
-        }
-    },
-
-    /**
-     * Dados mockados de médicos para quando a API não está disponível
-     */
-    getMockDoctors(): User[] {
-        const mockDoctorsData = [
-            { id: 1, nome: 'Dr. Carlos Silva', email: 'carlos.silva@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Cardiologia' },
-            { id: 2, nome: 'Dra. Ana Oliveira', email: 'ana.oliveira@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Dermatologia' },
-            { id: 3, nome: 'Dr. Roberto Santos', email: 'roberto.santos@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Ortopedia' },
-            { id: 4, nome: 'Dra. Juliana Costa', email: 'juliana.costa@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Pediatria' },
-            { id: 5, nome: 'Dr. Marcelo Lima', email: 'marcelo.lima@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Neurologia' },
-            { id: 6, nome: 'Dra. Patricia Mendes', email: 'patricia.mendes@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Oftalmologia' },
-            { id: 7, nome: 'Dr. Ricardo Ferreira', email: 'ricardo.ferreira@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Psiquiatria' },
-            { id: 8, nome: 'Dra. Camila Rodrigues', email: 'camila.rodrigues@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Ginecologia' },
-            { id: 9, nome: 'Dr. Felipe Alves', email: 'felipe.alves@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Urologia' },
-            { id: 10, nome: 'Dra. Beatriz Santos', email: 'beatriz.santos@clinica.com', tipoUsuario: 'MEDICO', especialidade: 'Endocrinologia' }
-        ];
-
-        return mockDoctorsData.map(this.mapApiUserToUser);
-    },
-
-    /**
-     * Busca médicos por especialidade
-     */
-    async getDoctorsBySpecialty(specialty: string): Promise<User[]> {
-        try {
-            const doctors = await apiClient.get<ApiUser[]>(
-                `${API_ENDPOINTS.DOCTORS}?especialidade=${encodeURIComponent(specialty)}`
-            );
-            return doctors.map(this.mapApiUserToUser);
-        } catch (error) {
-            console.error('Erro ao buscar médicos por especialidade:', error);
-            throw new Error('Erro ao carregar médicos da especialidade');
         }
     },
 
@@ -189,6 +157,7 @@ export const authApiService = {
             const response = await apiClient.get<ApiUser[]>(API_ENDPOINTS.USERS);
             return response.map(this.mapApiUserToUser);
         } catch (error) {
+            console.error('Erro ao buscar usuários:', error);
             throw new Error('Erro ao buscar usuários');
         }
     },
@@ -200,6 +169,7 @@ export const authApiService = {
         try {
             await apiClient.delete(API_ENDPOINTS.USER_BY_ID(userId));
         } catch (error) {
+            console.error('Erro ao excluir usuário:', error);
             throw new Error('Erro ao excluir usuário');
         }
     },
@@ -211,6 +181,7 @@ export const authApiService = {
         try {
             await apiClient.put(API_ENDPOINTS.USER_BY_ID(userId), userData);
         } catch (error) {
+            console.error('Erro ao editar usuário:', error);
             throw new Error('Erro ao editar usuário');
         }
     },
@@ -224,6 +195,7 @@ export const authApiService = {
                 novaSenha: newPassword,
             });
         } catch (error) {
+            console.error('Erro ao alterar senha do usuário:', error);
             throw new Error('Erro ao alterar senha do usuário');
         }
     },
@@ -242,6 +214,7 @@ export const authApiService = {
                 novaSenha: newPassword,
             });
         } catch (error) {
+            console.error('Erro ao alterar senha:', error);
             throw new Error('Erro ao alterar senha');
         }
     },

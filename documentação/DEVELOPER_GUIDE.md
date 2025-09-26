@@ -8,7 +8,6 @@
 - Telas e Responsabilidades
 - Integração com Backend
 - Sensores e Leituras
-- Dashboards e Gestão de Usuários
 - Validações e Utilitários
 - Setup e Execução
 - Troubleshooting
@@ -42,29 +41,19 @@ Estrutura principal:
 - Autenticação
   - `useLogin`: estado/validação e submit de login
   - `useRegister`: estado/validação e submit de cadastro
-- Administração
-  - `useUserManagement`: CRUD de usuários, modais e estados
-  - `useAdminDashboard`: consultas/usuários, abas, atualização de status
-  - `useDoctorDashboard`: consultas do médico e atualização de status
 
 ## Telas e Responsabilidades
 - Sensores: `SensorsScreen`, `SensorDetailScreen` usam apenas hooks e renderizam UI
 - Autenticação: `LoginScreen`, `RegisterScreen` consomem hooks dedicados
-- Administração: `AdminDashboardScreen`, `AdminDashboardWithUserManagement`, `UserManagementScreen` consomem hooks
 
 ## Integração com Backend
 - Configuração em `src/config/api.ts` (Android emulador adapta localhost → 10.0.2.2)
-- Endpoints esperados: `/sensors`, `/sensors/{id}`, `/readings`, `/readings/{sensorId}`, `/usuarios/*`
+- Endpoints esperados: `/sensors`, `/sensors/{id}`, `/readings`, `/readings/{sensorId}`, `/usuarios/login`, `/usuarios`, `/usuarios/me`
 - Teste de saúde: `apiClient.testConnection()` (GET `/health`)
 
 ## Sensores e Leituras
 - Normalização de campos no serviço para robustez a variações (ex.: `nome/modelo/tipo/unidade/valorAtual`, `sensor_id/valor/dataHora`)
 - Utilitários: `src/utils/sensors.ts` para status, datasets do gráfico, ordenação e mapeamento DTO→View
-
-## Dashboards e Gestão de Usuários
-- Admin: abas (consultas/usuários) e atualização de status via `useAdminDashboard`
-- Gestão de usuários: modais de edição e troca de senha via `useUserManagement`
-- Médico: listagem/atualização de consultas via `useDoctorDashboard`
 
 ## Validações e Utilitários
 - `src/utils/validation.ts`: email, senha mínima, comparação e mensagens
@@ -82,10 +71,8 @@ Estrutura principal:
 
 ## Referências
 - Backend do desafio: `https://vscode.dev/github/GabyFLauro/Challenge_Festo_Twinovate_Backend/blob/main`
-- Docs específicas mantidas como referência:
+- Docs específicas:
   - `REAL_BACKEND_INTEGRATION.md`
   - `SENSOR_BACKEND_INTEGRATION.md`
-  - `DASHBOARD_INTEGRATION_GUIDE.md`
-  - `USER_MANAGEMENT_GUIDE.md`
 
 
