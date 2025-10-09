@@ -38,6 +38,13 @@ class ApiClient {
   }
 
   /**
+   * Retorna a baseURL atual (getter público seguro para uso externo)
+   */
+  getBaseURL(): string {
+    return this.baseURL;
+  }
+
+  /**
    * Obtém os headers para a requisição
    */
   private getHeaders(customHeaders?: Record<string, string>): Record<string, string> {
@@ -100,6 +107,43 @@ class ApiClient {
       method: 'GET',
       headers,
     });
+  }
+
+  /**
+   * Requisição GET pública que não envia o header Authorization
+   * Útil para recursos públicos que devem ser iguais para todos os usuários
+   */
+  async publicGet<T>(endpoint: string, headers?: Record<string, string>): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
+    const finalHeaders = { ...this.defaultHeaders, ...headers };
+
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: finalHeaders,
+        signal: AbortSignal.timeout(this.timeout),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return {} as T;
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error('Timeout: A requisição demorou muito para responder');
+        }
+        throw error;
+      }
+      throw new Error('Erro desconhecido na requisição');
+    }
   }
 
   /**

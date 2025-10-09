@@ -12,7 +12,8 @@ export function useRegister() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [userType, setUserType] = useState<UserType>('USER');
+  // Always create users as 'USER' for this app (all users see same sensors)
+  const userType: UserType = 'USER';
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -30,7 +31,7 @@ export function useRegister() {
     setLoading(true);
     setError('');
     try {
-      await register({ name, email, password, userType });
+      await register({ name, email, password, userType: 'USER' });
       // @ts-expect-error typed in app routes
       navigation.navigate('Login');
     } catch (err) {
@@ -45,14 +46,14 @@ export function useRegister() {
     email,
     password,
     confirmPassword,
-    userType,
+  // userType removed: always 'USER'
     loading,
     error,
     setName,
     setEmail,
     setPassword,
     setConfirmPassword,
-    setUserType,
+  // setUserType removed
     canSubmit,
     submit,
   };

@@ -22,7 +22,7 @@ export const sensorsService = {
   async list(): Promise<SensorDTO[]> {
     try {
       console.log('🔍 Buscando sensores do backend real...');
-      const raw = await apiClient.get<any[]>('/sensors');
+  const raw = await apiClient.publicGet<any[]>('/sensors');
       const sensors: SensorDTO[] = (raw || []).map(normalizeSensor);
       console.log('✅ Sensores carregados do backend:', sensors.length);
       
@@ -151,7 +151,7 @@ export const sensorsService = {
   async getById(id: string): Promise<SensorDTO | null> {
     try {
       console.log(`🔍 Buscando sensor ${id} do backend real...`);
-      const raw = await apiClient.get<any>(`/sensors/${encodeURIComponent(id)}`);
+  const raw = await apiClient.publicGet<any>(`/sensors/${encodeURIComponent(id)}`);
       const sensor = normalizeSensor(raw);
       console.log('✅ Sensor carregado do backend:', sensor);
       

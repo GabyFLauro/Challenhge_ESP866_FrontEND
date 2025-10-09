@@ -10,6 +10,7 @@ import { RootStackParamList } from '../../types/navigation';
 import { Logo } from '../../components/Logo';
 import { styles } from './styles';
 import { useLogin } from '../../hooks/useLogin';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 type LoginScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -72,6 +73,7 @@ const LoginScreen: React.FC = () => {
                     Usuário comum: fabio@email.com / 123456
                 </Text>
             </View>
+            <LoadingOverlay visible={loading} message="Entrando..." />
         </Container>
     );
 };

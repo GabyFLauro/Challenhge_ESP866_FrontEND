@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { readingsService } from '../../services/readings';
 import { useSensorDetail } from '../../hooks/useSensorDetail';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 // Função auxiliar para cores RGBA
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
@@ -304,6 +305,7 @@ export const SensorDetailScreen = () => {
       >
         <Text style={styles.updateButtonText}>{posting ? 'Enviando...' : 'Registrar Leitura'}</Text>
       </TouchableOpacity>
+      <LoadingOverlay visible={loading || posting} message={posting ? 'Enviando leitura...' : 'Carregando dados...'} />
     </ScrollView>
   );
 };

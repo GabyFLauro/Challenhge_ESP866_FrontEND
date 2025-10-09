@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { Sensor } from './interfaces/sensor';
 import { useSensors } from '../../hooks/useSensors';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'Sensors'>;
 
@@ -50,9 +51,6 @@ export const SensorsScreen = () => {
                 <Text h4 style={styles.title}>Sensores Disponíveis</Text>
             </View>
             
-            {loading ? (
-                <ActivityIndicator size="large" color="#007AFF" />
-            ) : (
             <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
                 {error && (
                     <Text style={{ color: '#FF3B30', marginBottom: 8 }}>{error}</Text>
@@ -96,7 +94,7 @@ export const SensorsScreen = () => {
                     );
                 })}
             </ScrollView>
-            )}
+            <LoadingOverlay visible={loading} message="Carregando sensores..." />
         </View>
     );
 };

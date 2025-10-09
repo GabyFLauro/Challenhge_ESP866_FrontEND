@@ -108,14 +108,14 @@ export const backendInvestigationService = {
       }
       
       // Verificar tipos de dados
-      const sampleBackend = backendStructure.sampleSensor;
-      const sampleFrontend = frontendStructure.sampleData;
-      
+      const sampleBackend = backendStructure.sampleSensor as Record<string, any>;
+      const sampleFrontend = frontendStructure.sampleData as Record<string, any>;
+
       frontendStructure.expectedFields.forEach(field => {
-        if (sampleBackend[field] !== undefined && sampleFrontend[field] !== undefined) {
+        if (Object.prototype.hasOwnProperty.call(sampleBackend, field) && Object.prototype.hasOwnProperty.call(sampleFrontend, field)) {
           const backendType = typeof sampleBackend[field];
           const frontendType = typeof sampleFrontend[field];
-          
+
           if (backendType !== frontendType) {
             recommendations.push(`Tipo diferente para campo '${field}': backend=${backendType}, frontend=${frontendType}`);
           }

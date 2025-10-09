@@ -37,7 +37,7 @@ export const backendTestService = {
       return {
         isConnected: false,
         message: error instanceof Error ? error.message : 'Erro desconhecido',
-        url: apiClient.baseURL || 'URL não configurada',
+        url: apiClient.getBaseURL ? apiClient.getBaseURL() : 'URL não configurada',
         timestamp: new Date().toISOString()
       };
     }

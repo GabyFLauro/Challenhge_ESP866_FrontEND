@@ -10,6 +10,7 @@ import { RootStackParamList } from '../../types/navigation';
 import { Logo } from '../../components/Logo';
 import { styles } from './styles';
 import { useRegister } from '../../hooks/useRegister';
+import LoadingOverlay from '../../components/LoadingOverlay';
 
 type RegisterScreenProps = {
     navigation: NativeStackNavigationProp<RootStackParamList, 'Register'>;
@@ -17,7 +18,7 @@ type RegisterScreenProps = {
 
 const RegisterScreen: React.FC = () => {
     const navigation = useNavigation<RegisterScreenProps['navigation']>();
-    const { name, email, password, confirmPassword, userType, loading, error, setName, setEmail, setPassword, setConfirmPassword, setUserType, submit } = useRegister();
+    const { name, email, password, confirmPassword, loading, error, setName, setEmail, setPassword, setConfirmPassword, submit } = useRegister();
 
     return (
         <ScrollView style={styles.container}>
@@ -65,25 +66,7 @@ const RegisterScreen: React.FC = () => {
                     placeholderTextColor="#8E8E93"
                 />
 
-                <Text style={styles.userTypeLabel}>Tipo de Usuário:</Text>
-                <UserTypeContainer>
-                    <UserTypeButton
-                        selected={userType === 'USER'}
-                        onPress={() => setUserType('USER')}
-                    >
-                        <UserTypeText selected={userType === 'USER'}>
-                            Usuário
-                        </UserTypeText>
-                    </UserTypeButton>
-                    <UserTypeButton
-                        selected={userType === 'ADMIN'}
-                        onPress={() => setUserType('ADMIN')}
-                    >
-                        <UserTypeText selected={userType === 'ADMIN'}>
-                            Administrador
-                        </UserTypeText>
-                    </UserTypeButton>
-                </UserTypeContainer>
+                {/* Tipo de usuário fixo como 'USER' — todos os usuários veem os mesmos sensores */}
 
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
@@ -101,35 +84,11 @@ const RegisterScreen: React.FC = () => {
                     buttonStyle={styles.backButtonStyle}
                 />
             </View>
+            <LoadingOverlay visible={loading} message="Criando conta..." />
         </ScrollView>
     );
 };
 
-// STYLED COMPONENTS
-
-const UserTypeContainer = styled.View`
-  flex-direction: row;
-  width: 100%;
-  margin-bottom: 20px;
-  background-color: #2C2C2E;
-  border-radius: 8px;
-  padding: 4px;
-`;
-
-const UserTypeButton = styled(TouchableOpacity)<{ selected: boolean }>`
-  flex: 1;
-  padding: 12px;
-  border-radius: 6px;
-  background-color: ${(props: { selected: boolean }) => 
-    props.selected ? theme.colors.primary : 'transparent'};
-  align-items: center;
-`;
-
-const UserTypeText = styled.Text<{ selected: boolean }>`
-  font-size: 16px;
-  font-weight: bold;
-  color: ${(props: { selected: boolean }) => 
-    props.selected ? theme.colors.white : theme.colors.text};
-`;
+// STYLED COMPONENTS (kept minimal)
 
 export default RegisterScreen;
