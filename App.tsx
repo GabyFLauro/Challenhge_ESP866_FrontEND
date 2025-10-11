@@ -4,6 +4,7 @@ import { ThemeProvider } from 'styled-components/native';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { UIProvider } from './src/contexts/UIContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { SensorRealtimeProvider } from './src/contexts/SensorRealtimeContext';
 import theme from './src/styles/theme';
 
 export default function App() {
@@ -15,7 +16,9 @@ export default function App() {
             barStyle="light-content"
             backgroundColor={theme.colors.primary}
           />
-          <AppNavigator />
+          <SensorRealtimeProvider>
+            <AppNavigator />
+          </SensorRealtimeProvider>
         </UIProvider>
       </AuthProvider>
     </ThemeProvider>

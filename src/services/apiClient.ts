@@ -1,5 +1,6 @@
 import { API_CONFIG } from '../config/api';
 import { Platform } from 'react-native';
+import { getApiBaseUrl } from './runtimeConfig';
 
 /**
  * Cliente HTTP para comunicação com a API
@@ -19,6 +20,20 @@ class ApiClient {
     }
     this.timeout = API_CONFIG.TIMEOUT;
     this.defaultHeaders = { ...API_CONFIG.DEFAULT_HEADERS };
+  }
+
+  /**
+   * Carrega a baseURL salva em runtime (AsyncStorage) e aplica se existir
+   */
+  async loadRuntimeBaseUrl(): Promise<void> {
+    try {
+      const runtime = await getApiBaseUrl();
+      if (runtime && runtime.trim().length > 0) {
+        this.setBaseURL(runtime.trim());
+      }
+    } catch (e) {
+      // ignore
+    }
   }
 
   /**

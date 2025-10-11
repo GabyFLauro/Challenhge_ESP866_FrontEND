@@ -13,6 +13,8 @@ export const API_CONFIG = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  // WebSocket endpoint (SockJS handshake)
+  WS_ENDPOINT: '/ws',
 };
 
 /**

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { readingsService } from '../../services/readings';
 import { useSensorDetail } from '../../hooks/useSensorDetail';
+import { useSensorRealtime } from '../../contexts/SensorRealtimeContext';
 import LoadingOverlay from '../../components/LoadingOverlay';
 
 // Função auxiliar para cores RGBA
@@ -56,7 +57,12 @@ export const SensorDetailScreen = () => {
   const { sensorId } = route.params as { sensorId: string };
   const { width: screenWidth } = useWindowDimensions();
   const { width: chartWidth, height: chartHeight, fontSize: chartFontSize } = getChartDimensions(screenWidth);
-  const { sensor, readings, loading, error, status, chartData, sortedReadings, hasEnoughDataForChart, load } = useSensorDetail(sensorId);
+  const { sensor, readings, loading, error, status, chartData, sortedReadings, hasEnoughDataForChart, load, loadMore, hasMore } = useSensorDetail(sensorId);
+  const realtime = useSensorRealtime();
+
+  // try get realtime buffer for this sensor
+  const realtimeBuffer = realtime ? realtime.getBuffer(sensorId) : [];
+  const realtimeLast = realtime ? realtime.getLast(sensorId) : null;
   const [posting, setPosting] = React.useState<boolean>(false);
 
   const handleUpdate = () => { load(); };
@@ -215,12 +221,15 @@ export const SensorDetailScreen = () => {
         </View>
       </View>
 
-      {!!readings.length && (
+      {/* Valor atual: prioriza realtime se disponível */}
+      {(
+        realtimeLast || readings.length
+      ) && (
         <View style={styles.currentValueContainer}>
           <Text style={styles.currentValueLabel}>Valor Atual:</Text>
-          <Text style={[styles.currentValue, { color: getStatusColor(status) }]}>
-            {readings[0].value.toFixed(2)}
-          </Text>
+          <Text style={[styles.currentValue, { color: getStatusColor(status) }]}> {
+            realtimeLast ? (Number(realtimeLast.value ?? realtimeLast.pressao02_hx710b ?? realtimeLast.temperatura_ds18b20).toFixed(2)) : (readings[0].value.toFixed(2))
+          }</Text>
         </View>
       )}
 
@@ -228,33 +237,52 @@ export const SensorDetailScreen = () => {
         <Text style={styles.chartTitle}>Gráfico de Linha</Text>
         {loading ? (
           <ActivityIndicator size="large" color="#007AFF" />
-        ) : hasEnoughDataForChart ? (
-          <LineChart
-            data={chartData}
-            width={chartWidth}
-            height={chartHeight}
-            chartConfig={getLineChartConfig(chartFontSize)}
-            bezier
-            style={styles.chart}
-            withInnerLines={false}
-            withOuterLines={false}
-            withVerticalLines={false}
-            withHorizontalLines={true}
-            withDots={true}
-            segments={3}
-            fromZero={false}
-          />
         ) : (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataText}>
-            {sortedReadings.length === 0 
-                ? 'Nenhuma leitura disponível' 
-                : 'Dados insuficientes para o gráfico (mín. 2 leituras)'}
-            </Text>
-            <Text style={styles.noDataSubtext}>
-              Use o botão "Registrar Leitura" para adicionar dados
-            </Text>
-          </View>
+          // se houver buffer realtime com pelo menos 2 pontos, desenha a partir dele
+          (realtimeBuffer && realtimeBuffer.length >= 2) ? (
+            <LineChart
+              data={{ labels: realtimeBuffer.map((_, i) => `${i+1}`), datasets: [{ data: realtimeBuffer.map(d => Number(d.value ?? d.pressao02_hx710b ?? d.temperatura_ds18b20 ?? 0)) }] }}
+              width={chartWidth}
+              height={chartHeight}
+              chartConfig={getLineChartConfig(chartFontSize)}
+              bezier
+              style={styles.chart}
+              withInnerLines={false}
+              withOuterLines={false}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withDots={true}
+              segments={3}
+              fromZero={false}
+            />
+          ) : hasEnoughDataForChart ? (
+            <LineChart
+              data={chartData}
+              width={chartWidth}
+              height={chartHeight}
+              chartConfig={getLineChartConfig(chartFontSize)}
+              bezier
+              style={styles.chart}
+              withInnerLines={false}
+              withOuterLines={false}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withDots={true}
+              segments={3}
+              fromZero={false}
+            />
+          ) : (
+            <View style={styles.noDataContainer}>
+              <Text style={styles.noDataText}>
+              {sortedReadings.length === 0 
+                  ? 'Nenhuma leitura disponível' 
+                  : 'Dados insuficientes para o gráfico (mín. 2 leituras)'}
+              </Text>
+              <Text style={styles.noDataSubtext}>
+                Use o botão "Registrar Leitura" para adicionar dados
+              </Text>
+            </View>
+          )
         )}
       </View>
 
@@ -277,6 +305,11 @@ export const SensorDetailScreen = () => {
             </Text>
           </View>
         )}
+
+        {/* botão para carregar próxima página */}
+        <TouchableOpacity style={[styles.updateButton, { marginTop: 12 }]} onPress={() => loadMore()}>
+          <Text style={styles.updateButtonText}>Carregar mais</Text>
+        </TouchableOpacity>
       </View>
 
       <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>

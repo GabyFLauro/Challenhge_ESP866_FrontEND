@@ -79,16 +79,20 @@ export const readingsService = {
   },
 
   async listBySensor(sensorId: string): Promise<ReadingDTO[]> {
+    // compat: busca página 0 limit 50
+    return this.listBySensorPaged(sensorId, 50, 0);
+  },
+
+  async listBySensorPaged(sensorId: string, limit = 50, offset = 0): Promise<ReadingDTO[]> {
     try {
-      console.log(`🔍 Buscando leituras para sensor ${sensorId} do backend real...`);
-      const raw = await apiClient.get<any[]>(`${READINGS_BASE}/${encodeURIComponent(sensorId)}`);
+      console.log(`🔍 Buscando leituras paginadas para sensor ${sensorId} (limit=${limit} offset=${offset})...`);
+      const raw = await apiClient.get<any[]>(`${READINGS_BASE}/${encodeURIComponent(sensorId)}?limit=${limit}&offset=${offset}`);
       const readings = (raw || []).map(normalizeReading);
       console.log(`✅ Leituras do sensor ${sensorId} carregadas do backend:`, readings.length);
       return readings;
     } catch (e) {
       console.log(`⚠️ Erro ao buscar leituras do sensor ${sensorId} do backend, usando dados de fallback:`, e);
-      // Fallback: retorna dados simulados para o sensor específico
-      return generateMockReadings(sensorId, 8);
+      return generateMockReadings(sensorId, Math.min(8, limit));
     }
   },
 
