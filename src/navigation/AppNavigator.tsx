@@ -3,9 +3,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { LoadingProvider, useLoading } from '../contexts/LoadingContext';
 import { RootStackParamList } from '../types/navigation';
 import { Ionicons } from '@expo/vector-icons';
 import { View } from 'react-native';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 // Screens
 import LoginScreen from '../screens/LoginScreen';
@@ -222,3 +224,5 @@ export const AppNavigator: React.FC = () => {
         </NavigationContainer>
     );
 };
+
+export default AppNavigator;

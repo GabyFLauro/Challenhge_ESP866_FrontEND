@@ -5,6 +5,7 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { Button, Input, Text } from 'react-native-elements';
 import styled from 'styled-components/native';
 import { useAuth } from '../../contexts/AuthContext';
+// import { useLoading } from '../../contexts/LoadingContext';
 import theme from '../../styles/theme';
 import { RootStackParamList } from '../../types/navigation';
 import { Logo } from '../../components/Logo';
@@ -19,6 +20,17 @@ type LoginScreenProps = {
 const LoginScreen: React.FC = () => {
     const navigation = useNavigation<LoginScreenProps['navigation']>();
     const { email, password, setEmail, setPassword, loading, error, submit } = useLogin();
+    // const { showLoading, hideLoading } = useLoading();
+
+    const handleLogin = async () => {
+        // showLoading('Fazendo login...');
+        try {
+            await submit();
+            // showLoading('Redirecionando...');
+        } catch (err) {
+            // hideLoading();
+        }
+    };
 
     return (
         <Container>

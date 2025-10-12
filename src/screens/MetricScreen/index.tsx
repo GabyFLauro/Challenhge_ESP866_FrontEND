@@ -10,6 +10,9 @@ import { useSensorStream } from '../../hooks/useSensorStream';
 import { readingsService, ReadingDTO } from '../../services/readings';
 import { historyService, SensorHistoryItem } from '../../services/history';
 import { classifyMetric, vibrationDiagnostics } from '../../utils/alerts';
+import AnimatedButton from '../../components/AnimatedButton';
+import FeedbackIndicator from '../../components/FeedbackIndicator';
+// import { useLoading } from '../../contexts/LoadingContext';
 
 type RouteParams = {
   keyName: string; // ex: 'pressao02_hx710b'
@@ -45,6 +48,7 @@ export const MetricScreen: React.FC = () => {
   const meta = LABELS[keyName] || { title: params?.title || keyName, unit: params?.unit };
 
   const { buffer, lastReading, status, paused, pause, resume } = useSensorStream(240);
+  // const { showLoading, hideLoading } = useLoading();
   const [history, setHistory] = useState<SensorHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -52,6 +56,13 @@ export const MetricScreen: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState<'start' | 'end' | null>(null);
   const [customStart, setCustomStart] = useState<Date | null>(null);
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
+  
+  // Feedback states
+  const [feedback, setFeedback] = useState<{
+    visible: boolean;
+    type: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+  }>({ visible: false, type: 'info', message: '' });
 
   const last = lastReading || null;
   const lastValue = useMemo(() => {
@@ -72,6 +83,16 @@ export const MetricScreen: React.FC = () => {
     const b = typeof v === 'boolean' ? v : Number(v) === 1;
     return b ? 'ATIVADA' : 'DESATIVADA';
   }, [isBoolean, last, keyName]);
+
+  // Flag to track initial load
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Show loading when screen first mounts
+  // useEffect(() => {
+  //   if (isInitialLoad) {
+  //     showLoading(`Carregando dados de ${meta.title}...`);
+  //   }
+  // }, [isInitialLoad, meta.title, showLoading]);
 
   // Carregar histórico deste sensor (mapeado pelo keyName)
   useEffect(() => {
@@ -102,16 +123,30 @@ export const MetricScreen: React.FC = () => {
         if (mounted) {
           setHistory(data);
           setHistoryError(null);
+          
+          // Remove initial load feedback
+          if (isInitialLoad) {
+            setIsInitialLoad(false);
+          }
         }
       } catch (e) {
-        if (mounted) setHistoryError(e instanceof Error ? e.message : 'Falha ao carregar histórico');
+        if (mounted) {
+          const errorMsg = e instanceof Error ? e.message : 'Falha ao carregar histórico';
+          setHistoryError(errorMsg);
+          // if (isInitialLoad) hideLoading();
+          setFeedback({
+            visible: true,
+            type: 'error',
+            message: errorMsg
+          });
+        }
       } finally {
         if (mounted) setLoadingHistory(false);
       }
     }
     if (keyName) loadHistory();
     return () => { mounted = false; };
-  }, [keyName, period, customStart, customEnd]);
+  }, [keyName, period, customStart, customEnd, isInitialLoad]);
 
   // Preparar dados para gráfico por tempo (histórico + realtime)
   const timeChart = useMemo(() => {
@@ -142,9 +177,9 @@ export const MetricScreen: React.FC = () => {
       <View style={styles.header}>
         <Text h4 style={styles.title}>{meta.title}</Text>
         <Text style={styles.subtitle}>Status stream: {status} {paused ? '(Pausado)' : ''}</Text>
-        <TouchableOpacity onPress={() => (paused ? resume() : pause())} style={styles.actionButton}>
+        <AnimatedButton onPress={() => (paused ? resume() : pause())} style={styles.actionButton}>
           <Text style={styles.actionButtonText}>{paused ? 'Retomar' : 'Pausar'}</Text>
-        </TouchableOpacity>
+        </AnimatedButton>
       </View>
 
       <View style={styles.card}>
@@ -188,9 +223,9 @@ export const MetricScreen: React.FC = () => {
         {period === 'custom' && (
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
             <Text style={{ color: '#fff', marginRight: 8 }}>Início:</Text>
-            <TouchableOpacity onPress={() => setShowDatePicker('start')} style={styles.actionButton}><Text style={styles.actionButtonText}>{customStart ? customStart.toLocaleString() : 'Selecionar'}</Text></TouchableOpacity>
+            <AnimatedButton onPress={() => setShowDatePicker('start')} style={styles.actionButton}><Text style={styles.actionButtonText}>{customStart ? customStart.toLocaleString() : 'Selecionar'}</Text></AnimatedButton>
             <Text style={{ color: '#fff', marginHorizontal: 8 }}>Fim:</Text>
-            <TouchableOpacity onPress={() => setShowDatePicker('end')} style={styles.actionButton}><Text style={styles.actionButtonText}>{customEnd ? customEnd.toLocaleString() : 'Selecionar'}</Text></TouchableOpacity>
+            <AnimatedButton onPress={() => setShowDatePicker('end')} style={styles.actionButton}><Text style={styles.actionButtonText}>{customEnd ? customEnd.toLocaleString() : 'Selecionar'}</Text></AnimatedButton>
           </View>
         )}
         {showDatePicker && (
@@ -241,7 +276,7 @@ export const MetricScreen: React.FC = () => {
       <View style={styles.card}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <Text style={styles.label}>Histórico (últimas leituras)</Text>
-          <TouchableOpacity onPress={() => {
+          <AnimatedButton onPress={() => {
             setLoadingHistory(true);
             let inicio: Date | undefined;
             let fim: Date | undefined = new Date();
@@ -258,12 +293,18 @@ export const MetricScreen: React.FC = () => {
               fim = customEnd;
             }
             historyService.getHistory(keyName, inicio, fim, 100)
-              .then((d) => setHistory(d))
-              .catch((e) => setHistoryError(e instanceof Error ? e.message : 'Falha ao carregar histórico'))
+              .then((d) => {
+                setHistory(d);
+                setHistoryError(null);
+              })
+              .catch((e) => {
+                const errorMsg = e instanceof Error ? e.message : 'Falha ao carregar histórico';
+                setHistoryError(errorMsg);
+              })
               .finally(() => setLoadingHistory(false));
           }} style={styles.actionButton}>
             <Text style={styles.actionButtonText}>Atualizar</Text>
-          </TouchableOpacity>
+          </AnimatedButton>
         </View>
 
         {loadingHistory ? (
@@ -348,6 +389,15 @@ export const MetricScreen: React.FC = () => {
           <Text style={{ color: '#8E8E93' }}>Sem leitura atual para diagnóstico.</Text>
         )}
       </View>
+      
+      {/* Feedback Indicator */}
+      <FeedbackIndicator
+        visible={feedback.visible}
+        type={feedback.type}
+        message={feedback.message}
+        duration={feedback.type === 'success' && isInitialLoad === false ? 1500 : 3000}
+        onHide={() => setFeedback(prev => ({ ...prev, visible: false }))}
+      />
     </ScrollView>
   );
 };

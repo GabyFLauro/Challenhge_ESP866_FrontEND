@@ -3,7 +3,7 @@ import { StatusBar } from 'react-native';
 import { ThemeProvider } from 'styled-components/native';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { UIProvider } from './src/contexts/UIContext';
-import { AppNavigator } from './src/navigation/AppNavigator';
+import AppNavigator from './src/navigation/AppNavigator';
 import { SensorRealtimeProvider } from './src/contexts/SensorRealtimeContext';
 import theme from './src/styles/theme';
 

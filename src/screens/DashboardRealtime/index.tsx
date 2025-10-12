@@ -3,6 +3,8 @@ import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from 'react-native-elements';
 import { useSensorStream } from '../../hooks/useSensorStream';
 import ChartPanel from '../../components/ChartPanel';
+import AnimatedButton from '../../components/AnimatedButton';
+// import { useLoading } from '../../contexts/LoadingContext';
 
 const AVAILABLE_KEYS = [
   'temperatura_ds18b20',
@@ -16,8 +18,22 @@ const AVAILABLE_KEYS = [
 export const DashboardRealtime = () => {
   const { buffer, lastReading, status, paused, pause, resume, metrics } = useSensorStream();
   const [selected, setSelected] = useState<string>(AVAILABLE_KEYS[0]);
+  // const { showLoading, hideLoading } = useLoading();
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const lastValue = lastReading ? (lastReading[selected] ?? lastReading[selected.toLowerCase()]) : undefined;
+
+  // Show loading on first load and hide when data is ready
+  // React.useEffect(() => {
+  //   if (isFirstLoad) {
+  //     showLoading('Conectando ao sistema...');
+  //     const timer = setTimeout(() => {
+  //       hideLoading();
+  //       setIsFirstLoad(false);
+  //     }, 1200);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [isFirstLoad, showLoading, hideLoading]);
 
   return (
     <View style={styles.container}>
@@ -29,13 +45,13 @@ export const DashboardRealtime = () => {
 
       <View style={styles.keyRow}>
         {AVAILABLE_KEYS.map(k => (
-          <TouchableOpacity
+          <AnimatedButton
             key={k}
             onPress={() => setSelected(k)}
             style={[styles.chip, selected === k && styles.chipSelected]}
           >
             <Text style={[styles.chipText, selected === k && styles.chipTextSelected]}>{k}</Text>
-          </TouchableOpacity>
+          </AnimatedButton>
         ))}
       </View>
 
@@ -44,9 +60,9 @@ export const DashboardRealtime = () => {
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Última leitura</Text>
             <Text style={styles.cardValue}>{selected}: {lastValue !== undefined ? String(lastValue) : '—'}</Text>
-            <TouchableOpacity onPress={() => (paused ? resume() : pause())} style={styles.actionButton}>
+            <AnimatedButton onPress={() => (paused ? resume() : pause())} style={styles.actionButton}>
               <Text style={styles.actionButtonText}>{paused ? 'Retomar' : 'Pausar'}</Text>
-            </TouchableOpacity>
+            </AnimatedButton>
           </View>
 
           <ChartPanel buffer={buffer} keyName={selected} maxPoints={60} />
