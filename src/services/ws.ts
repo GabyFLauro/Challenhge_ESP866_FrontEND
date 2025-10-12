@@ -1,6 +1,6 @@
 import SockJS from 'sockjs-client';
 import { Client, IMessage, Frame } from '@stomp/stompjs';
-
+import { Platform } from 'react-native';
 import { API_CONFIG } from '../config/api';
 
 export type SensorMessage = any;
@@ -8,8 +8,13 @@ export type SensorMessage = any;
 let singletonClient: Client | null = null;
 
 export function connectStomp(onMessage: (msg: SensorMessage) => void, onStatus?: (status: string) => void) {
-  const base = API_CONFIG.BASE_URL;
-  const wsUrl = (global as any).__TEST_WS_URL__ || `${base.replace(/^http/, 'http')}${API_CONFIG.WS_ENDPOINT}`;
+  let base = API_CONFIG.BASE_URL;
+  if (Platform.OS === 'android' && base.includes('localhost')) {
+    base = base.replace('localhost', '10.0.2.2');
+  }
+  // SockJS usa HTTP(S) endpoint; apenas concatene o caminho
+  const wsUrl = (global as any).__TEST_WS_URL__ || `${base.replace(/\/$/, '')}${API_CONFIG.WS_ENDPOINT}`;
+  console.log('[STOMP] Conectando em', wsUrl);
 
   if (singletonClient && singletonClient.active) {
     console.log('STOMP: cliente já ativo, retornando instância existente');

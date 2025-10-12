@@ -10,6 +10,16 @@ type ChartPanelProps = {
 };
 
 export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoints = 40, height = 160 }) => {
+  const LABELS: Record<string, string> = {
+    pressao02_hx710b: 'Pressão HX710B',
+    temperatura_ds18b20: 'Temperatura DS18B20',
+    vibracao_vib_x: 'Vibração X',
+    vibracao_vib_y: 'Vibração Y',
+    vibracao_vib_z: 'Vibração Z',
+    velocidade_m_s: 'Velocidade',
+    chave_fim_de_curso: 'Chave Fim de Curso',
+  };
+
   const data = useMemo(() => {
     if (!buffer || buffer.length === 0) return { labels: [], values: [] };
 
@@ -27,10 +37,14 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
     return { labels, values: vals };
   }, [buffer, keyName, maxPoints]);
 
+  const cardStyle = { backgroundColor: '#1C1C1E', padding: 16, borderRadius: 12, marginBottom: 12 } as const;
+  const labelTextStyle = { color: '#FFFFFF', marginBottom: 6, fontWeight: '600' } as const;
+
   if (!data.values || data.values.length === 0) {
     return (
-      <View style={{ padding: 12 }}>
-        <Text>Nenhum dado para <Text style={{ fontWeight: 'bold' }}>{keyName}</Text></Text>
+      <View style={cardStyle}>
+        <Text style={labelTextStyle}>{LABELS[keyName] || keyName}</Text>
+        <Text style={{ color: '#8E8E93' }}>Aguardando dados...</Text>
       </View>
     );
   }
@@ -38,21 +52,22 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
   const screenWidth = Dimensions.get('window').width - 24;
 
   return (
-    <View style={{ padding: 12 }}>
-      <Text style={{ marginBottom: 6 }}>{keyName}</Text>
+    <View style={cardStyle}>
+      <Text style={labelTextStyle}>{LABELS[keyName] || keyName}</Text>
       <LineChart
         data={{ labels: data.labels, datasets: [{ data: data.values }] }}
         width={screenWidth}
         height={height}
-        withDots={false}
+        withDots={true}
         withInnerLines={false}
         withOuterLines={false}
         withHorizontalLabels={false}
         withVerticalLabels={false}
         chartConfig={{
-          backgroundGradientFrom: '#ffffff',
-          backgroundGradientTo: '#ffffff',
+          backgroundGradientFrom: '#1C1C1E',
+          backgroundGradientTo: '#1C1C1E',
           color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           strokeWidth: 2,
         }}
         bezier

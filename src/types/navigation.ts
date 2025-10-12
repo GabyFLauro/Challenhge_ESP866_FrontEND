@@ -18,6 +18,8 @@ export type RootStackParamList = {
     Home: undefined;
     Sensors: undefined;
     SensorDetail: { sensorId: string };
+    Realtime: undefined;
+    Metric: { keyName: string; title?: string; unit?: string };
     AccountSettings: undefined;
     DrawerNavigator: undefined;
 };

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, TouchableOpacity } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { Text } from 'react-native-elements';
 import { useSensorStream } from '../../hooks/useSensorStream';
 import ChartPanel from '../../components/ChartPanel';
@@ -20,27 +20,32 @@ export const DashboardRealtime = () => {
   const lastValue = lastReading ? (lastReading[selected] ?? lastReading[selected.toLowerCase()]) : undefined;
 
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ padding: 12, borderBottomWidth: 1, borderColor: '#eee' }}>
-        <Text h4>Dashboard Realtime</Text>
-        <Text>Status: {status} {paused ? '(Pausado)' : ''}</Text>
-        {metrics && <Text>Leituras: {metrics.total} • RPS: {metrics.rps}</Text>}
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text h4 style={styles.title}>Dashboard Realtime</Text>
+        <Text style={styles.subtitle}>Status: {status} {paused ? '(Pausado)' : ''}</Text>
+        {metrics && <Text style={styles.subtitle}>Leituras: {metrics.total} • RPS: {metrics.rps}</Text>}
       </View>
 
-      <View style={{ padding: 12, flexDirection: 'row', flexWrap: 'wrap' }}>
+      <View style={styles.keyRow}>
         {AVAILABLE_KEYS.map(k => (
-          <TouchableOpacity key={k} onPress={() => setSelected(k)} style={{ padding: 8, margin: 4, backgroundColor: selected === k ? '#007AFF' : '#eee', borderRadius: 6 }}>
-            <Text style={{ color: selected === k ? '#fff' : '#000' }}>{k}</Text>
+          <TouchableOpacity
+            key={k}
+            onPress={() => setSelected(k)}
+            style={[styles.chip, selected === k && styles.chipSelected]}
+          >
+            <Text style={[styles.chipText, selected === k && styles.chipTextSelected]}>{k}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <ScrollView>
-        <View style={{ paddingHorizontal: 12 }}>
-          <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 8, marginBottom: 12 }}>
-            <Text>Última leitura ({selected}): {lastValue !== undefined ? String(lastValue) : '—'}</Text>
-            <TouchableOpacity onPress={() => (paused ? resume() : pause())} style={{ marginTop: 8 }}>
-              <Text style={{ color: '#007AFF' }}>{paused ? 'Retomar' : 'Pausar'}</Text>
+        <View style={styles.content}>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Última leitura</Text>
+            <Text style={styles.cardValue}>{selected}: {lastValue !== undefined ? String(lastValue) : '—'}</Text>
+            <TouchableOpacity onPress={() => (paused ? resume() : pause())} style={styles.actionButton}>
+              <Text style={styles.actionButtonText}>{paused ? 'Retomar' : 'Pausar'}</Text>
             </TouchableOpacity>
           </View>
 
@@ -52,3 +57,77 @@ export const DashboardRealtime = () => {
 };
 
 export default DashboardRealtime;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0C0C0E',
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+    backgroundColor: '#1C1C1E',
+    borderBottomColor: '#2C2C2E',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  title: {
+    color: '#FFFFFF',
+  },
+  subtitle: {
+    color: '#8E8E93',
+    marginTop: 2,
+  },
+  keyRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    margin: 4,
+    backgroundColor: '#2C2C2E',
+    borderRadius: 8,
+  },
+  chipSelected: {
+    backgroundColor: '#007AFF',
+  },
+  chipText: {
+    color: '#FFFFFF',
+  },
+  chipTextSelected: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  content: {
+    paddingHorizontal: 12,
+    paddingBottom: 16,
+  },
+  card: {
+    padding: 16,
+    backgroundColor: '#1C1C1E',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  cardLabel: {
+    color: '#8E8E93',
+    marginBottom: 6,
+  },
+  cardValue: {
+    color: '#FFFFFF',
+    fontSize: 16,
+  },
+  actionButton: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    backgroundColor: '#2C2C2E',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+  },
+});

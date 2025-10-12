@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { connectSocket, disconnectSocket } from '../services/socketio';
-import { connectStomp, disconnectStomp } from '../services/ws';
+import { useSensorStream } from '../hooks/useSensorStream';
 
 type Reading = Record<string, any> & { id?: string; data_hora?: string };
 
@@ -19,39 +18,38 @@ export function SensorRealtimeProvider({ children }: { children: React.ReactNode
   const buffersRef = useRef<BufferMap>({});
   const [tick, setTick] = useState(0); // to trigger re-renders
   const pausedRef = useRef(false);
+  
+  // Usar o stream global - isso mantém uma única conexão para toda a app
+  const { buffer } = useSensorStream(500);
 
   useEffect(() => {
-    function onMessage(data: Reading) {
-      if (pausedRef.current) return;
+    // Processar dados do buffer global
+    if (buffer && buffer.length > 0) {
+      const lastReading = buffer[buffer.length - 1];
+      if (!pausedRef.current && lastReading) {
+        // Determine sensor id — try common fields
+        const sensorId = lastReading.sensorId ?? lastReading.idSensor ?? lastReading.sensor_id ?? String(lastReading.id ?? 'default');
 
-      // Determine sensor id — try common fields
-      const sensorId = data.sensorId ?? data.idSensor ?? data.sensor_id ?? String(data.id ?? 'default');
-
-      if (!buffersRef.current[sensorId]) buffersRef.current[sensorId] = [];
-      buffersRef.current[sensorId].push(data);
-      // keep last N
-      const MAX = 200;
-      if (buffersRef.current[sensorId].length > MAX) {
-        buffersRef.current[sensorId].splice(0, buffersRef.current[sensorId].length - MAX);
+        if (!buffersRef.current[sensorId]) buffersRef.current[sensorId] = [];
+        
+        // Evitar duplicatas (verificar se já existe)
+        const lastInBuffer = buffersRef.current[sensorId][buffersRef.current[sensorId].length - 1];
+        const isSameReading = lastInBuffer && 
+          lastInBuffer.data_hora === lastReading.data_hora &&
+          JSON.stringify(lastInBuffer) === JSON.stringify(lastReading);
+        
+        if (!isSameReading) {
+          buffersRef.current[sensorId].push(lastReading);
+          // keep last N
+          const MAX = 200;
+          if (buffersRef.current[sensorId].length > MAX) {
+            buffersRef.current[sensorId].splice(0, buffersRef.current[sensorId].length - MAX);
+          }
+          setTick(t => t + 1);
+        }
       }
-
-      setTick(t => t + 1);
     }
-
-    // prefer socket
-    try {
-      connectSocket(onMessage, () => {
-        // connected
-      });
-    } catch (e) {
-      connectStomp(onMessage, () => {});
-    }
-
-    return () => {
-      try { disconnectSocket(); } catch {}
-      try { disconnectStomp(); } catch {}
-    };
-  }, []);
+  }, [buffer]);
 
   const getBuffer = (sensorId: string) => {
     return buffersRef.current[sensorId] ?? [];
