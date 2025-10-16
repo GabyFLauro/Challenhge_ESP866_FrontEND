@@ -1,19 +1,35 @@
 
 import { StyleSheet } from 'react-native';
+import { SENSOR_DETAIL_COLORS, SENSOR_DETAIL_TEXT_COLORS, THEME_VERSION } from '../../config/themeColors';
+
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║                ESTILOS - TELA DE DETALHES DO SENSOR                          ║
+// ║                                                                              ║
+// ║  ⚠️  NÃO ALTERE AS CORES AQUI!                                              ║
+// ║  📍 Para alterar cores, edite: src/config/themeColors.ts                    ║
+// ║                                                                              ║
+// ║  Este arquivo apenas importa e aplica as cores do themeColors.ts           ║
+// ║  Versão do tema atual: ${THEME_VERSION}                                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+
+// Importando cores do arquivo centralizado (NÃO EDITE AQUI!)
+const COLORS = SENSOR_DETAIL_COLORS;
+const TEXT_COLORS = SENSOR_DETAIL_TEXT_COLORS;
+// =================================================
 
 export const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.appBackground,
     padding: 16,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.titleText,
   },
   sensorInfoContainer: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: COLORS.sensorInfoBackground,
     borderRadius: 10,
     padding: 16,
     marginBottom: 20,
@@ -27,19 +43,19 @@ export const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#8E8E93',
+    color: TEXT_COLORS.infoLabelText,
     flex: 1,
     marginRight: 8,
   },
   infoValue: {
     fontSize: 14,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.infoValueText,
     flex: 2,
     textAlign: 'right',
     fontWeight: '500',
   },
   noDataContainer: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: COLORS.noDataBackground,
     borderRadius: 8,
     padding: 20,
     alignItems: 'center',
@@ -47,13 +63,13 @@ export const styles = StyleSheet.create({
   },
   noDataText: {
     fontSize: 16,
-    color: '#8E8E93',
+    color: TEXT_COLORS.noDataText,
     textAlign: 'center',
     marginBottom: 8,
   },
   noDataSubtext: {
     fontSize: 14,
-    color: '#AEAEB2',
+    color: TEXT_COLORS.noDataSubtext,
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -66,7 +82,7 @@ export const styles = StyleSheet.create({
   statusLabel: {
     fontSize: 18,
     marginRight: 8,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.statusLabelText,
   },
   statusValueContainer: {
     flexDirection: 'row',
@@ -80,22 +96,26 @@ export const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   currentValueContainer: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: COLORS.currentValueBackground,
     padding: 16,
     borderRadius: 8,
     marginBottom: 20,
+    alignItems: 'center',  // Centraliza horizontalmente
+    justifyContent: 'center',  // Centraliza verticalmente
   },
   currentValueLabel: {
     fontSize: 16,
     marginBottom: 8,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.currentValueLabelText,
+    textAlign: 'center',  // Centraliza o texto
   },
   currentValue: {
     fontSize: 32,
     fontWeight: 'bold',
+    textAlign: 'center',  // Centraliza o texto
   },
   chartContainer: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: COLORS.chartBackground,
     padding: 16,
     borderRadius: 10,
     marginBottom: 20,
@@ -106,14 +126,14 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.chartTitleText,
   },
   chart: {
     marginVertical: 8,
     borderRadius: 16,
   },
   historyContainer: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: COLORS.historyBackground,
     padding: 16,
     borderRadius: 10,
   },
@@ -121,7 +141,7 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.historyTitleText,
   },
   historyItem: {
     flexDirection: 'row',
@@ -132,7 +152,7 @@ export const styles = StyleSheet.create({
   },
   historyText: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: TEXT_COLORS.historyItemText,
   },
   updateButton: {
     backgroundColor: '#007AFF',

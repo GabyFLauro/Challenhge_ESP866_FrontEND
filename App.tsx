@@ -6,8 +6,12 @@ import { UIProvider } from './src/contexts/UIContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import { SensorRealtimeProvider } from './src/contexts/SensorRealtimeContext';
 import theme from './src/styles/theme';
+import { THEME_VERSION } from './src/config/themeColors';
 
 export default function App() {
+  // Log da versão do tema para debug (garante que está recarregando)
+  console.log(`🎨 Theme Version: ${THEME_VERSION}`);
+  
   return (
     <ThemeProvider theme={theme}>
       <AuthProvider>

@@ -1,9 +1,25 @@
 import { StyleSheet } from 'react-native';
+import { SENSORS_LIST_COLORS, SENSORS_LIST_TEXT_COLORS, THEME_VERSION } from '../../config/themeColors';
+
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║                ESTILOS - TELA DE LISTA DE SENSORES                           ║
+// ║                                                                              ║
+// ║  ⚠️  NÃO ALTERE AS CORES AQUI!                                              ║
+// ║  📍 Para alterar cores, edite: src/config/themeColors.ts                    ║
+// ║                                                                              ║
+// ║  Este arquivo apenas importa e aplica as cores do themeColors.ts           ║
+// ║  Versão do tema atual: ${THEME_VERSION}                                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+
+// Importando cores do arquivo centralizado (NÃO EDITE AQUI!)
+const COLORS = SENSORS_LIST_COLORS;
+const TEXT_COLORS = SENSORS_LIST_TEXT_COLORS;
+// =================================================
 
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000000',
+        backgroundColor: COLORS.appBackground,
         padding: 16,
     },
     header: {
@@ -13,11 +29,11 @@ export const styles = StyleSheet.create({
         marginBottom: 20,
     },
     title: {
-        color: '#FFFFFF',
+        color: TEXT_COLORS.titleText,
         flex: 1,
     },
     backendStatus: {
-        color: '#8E8E93',
+        color: TEXT_COLORS.backendStatusText,
         fontSize: 12,
         marginTop: 4,
     },
@@ -29,12 +45,12 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
     },
     investigateButtonText: {
-        color: '#FFFFFF',
+        color: TEXT_COLORS.investigateButtonText,
         fontSize: 14,
         fontWeight: '600',
     },
     investigationResult: {
-        backgroundColor: '#1C1C1E',
+        backgroundColor: COLORS.investigationResultBackground,
         borderRadius: 8,
         padding: 12,
         marginBottom: 16,
@@ -42,7 +58,7 @@ export const styles = StyleSheet.create({
         borderLeftColor: '#FF9500',
     },
     investigationResultText: {
-        color: '#FFFFFF',
+        color: TEXT_COLORS.investigationResultText,
         fontSize: 12,
         fontFamily: 'monospace',
         lineHeight: 16,
@@ -51,7 +67,7 @@ export const styles = StyleSheet.create({
         flex: 1,
     },
     sensorCard: {
-        backgroundColor: '#1C1C1E',
+        backgroundColor: COLORS.sensorCardBackground,
         borderRadius: 10,
         padding: 16,
         marginBottom: 12,
@@ -72,29 +88,29 @@ export const styles = StyleSheet.create({
     sensorName: {
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: TEXT_COLORS.sensorNameText,
         marginBottom: 4,
     },
     sensorLocation: {
         fontSize: 14,
-        color: '#FF9500',
+        color: TEXT_COLORS.sensorLocationText,
         marginBottom: 2,
     },
     sensorDescription: {
         fontSize: 13,
-        color: '#AEAEB2',
+        color: TEXT_COLORS.sensorDescriptionText,
         marginBottom: 4,
         fontStyle: 'italic',
     },
     currentValue: {
         fontSize: 15,
-        color: '#34C759',
+        color: TEXT_COLORS.currentValueText,
         fontWeight: '600',
         marginBottom: 4,
     },
     lastUpdate: {
         fontSize: 12,
-        color: '#8E8E93',
+        color: TEXT_COLORS.lastUpdateText,
     },
     statusContainer: {
         alignItems: 'center',

@@ -1,50 +1,66 @@
 import { StyleSheet } from 'react-native';
+import { METRIC_SCREEN_COLORS, METRIC_SCREEN_TEXT_COLORS, THEME_VERSION } from '../../config/themeColors';
+
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║                     ESTILOS - TELA DE MÉTRICAS                               ║
+// ║                                                                              ║
+// ║  ⚠️  NÃO ALTERE AS CORES AQUI!                                              ║
+// ║  📍 Para alterar cores, edite: src/config/themeColors.ts                    ║
+// ║                                                                              ║
+// ║  Este arquivo apenas importa e aplica as cores do themeColors.ts           ║
+// ║  Versão do tema atual: ${THEME_VERSION}                                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+
+// Importando cores do arquivo centralizado (NÃO EDITE AQUI!)
+const COLORS = METRIC_SCREEN_COLORS;
+const TEXT_COLORS = METRIC_SCREEN_TEXT_COLORS;
+// =================================================
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0C0C0E',
+    backgroundColor: COLORS.appBackground,
   },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
   title: {
-    color: '#FFFFFF',
+    color: TEXT_COLORS.titleText,
     marginBottom: 4,
   },
   subtitle: {
-    color: '#8E8E93',
+    color: TEXT_COLORS.subtitleText,
   },
   actionButton: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: '#2C2C2E',
+    backgroundColor: COLORS.actionButtonBackground,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },
   actionButtonText: {
-    color: '#FFFFFF',
+    color: TEXT_COLORS.actionButtonText,
   },
   card: {
-    backgroundColor: '#1C1C1E',
+    backgroundColor: COLORS.cardBackground,
     marginHorizontal: 16,
     marginTop: 12,
     padding: 16,
     borderRadius: 12,
   },
   label: {
-    color: '#8E8E93',
+    color: TEXT_COLORS.labelText,
     marginBottom: 8,
   },
   value: {
-    color: '#FFFFFF',
+    color: TEXT_COLORS.valueText,
     fontSize: 28,
     fontWeight: '600',
   },
   timestamp: {
     marginTop: 6,
-    color: '#8E8E93',
+    color: TEXT_COLORS.timestampText,
   },
 });
