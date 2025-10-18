@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensions, ActivityIndicator, Alert } from 'react-native';
+import AlertRedIcon from '../../components/AlertRedIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../../components/Logo';
 import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
@@ -111,16 +112,17 @@ export const SensorDetailScreen = () => {
     }
   };
 
+  // Retorna emoji para ok/alerta; null para erro (usará o ícone SVG)
   const getStatusIcon = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
-        return 'checkmark-circle';
+        return '✅';
       case 'warning':
-        return 'warning';
+        return '⚠️';
       case 'error':
-        return 'alert-circle';
+        return null;
       default:
-        return 'help-circle';
+        return '❓';
     }
   };
 
@@ -131,7 +133,7 @@ export const SensorDetailScreen = () => {
       case 'warning':
         return 'ALERTA';
       case 'error':
-        return 'CRÍTICO';
+        return 'FALHA';
       default:
         return 'DESCONHECIDO';
     }
@@ -211,12 +213,13 @@ export const SensorDetailScreen = () => {
       <View style={styles.statusContainer}>
         <Text style={styles.statusLabel}>Status:</Text>
         <View style={styles.statusValueContainer}>
-          <Ionicons
-            name={getStatusIcon(status)}
-            size={24}
-            color={getStatusColor(status)}
-            style={styles.statusIcon}
-          />
+          {status === 'error' ? (
+            <View style={{ marginRight: 10 }}>
+              <AlertRedIcon size={44} />
+            </View>
+          ) : (
+            <Text style={[styles.statusValue, { color: getStatusColor(status), fontSize: 44, marginRight: 10 }]}>{getStatusIcon(status)}</Text>
+          )}
           <Text style={[styles.statusValue, { color: getStatusColor(status) }]}>{getStatusText(status)}</Text>
         </View>
       </View>
@@ -225,11 +228,31 @@ export const SensorDetailScreen = () => {
       {(
         realtimeLast || readings.length
       ) && (
-        <View style={styles.currentValueContainer}>
-          <Text style={styles.currentValueLabel}>Valor Atual:</Text>
-          <Text style={[styles.currentValue, { color: getStatusColor(status) }]}> {
-            realtimeLast ? (Number(realtimeLast.value ?? realtimeLast.pressao02_hx710b ?? realtimeLast.temperatura_ds18b20).toFixed(2)) : (readings[0].value.toFixed(2))
-          }</Text>
+        <View style={{
+          backgroundColor: '#D1D1D6',
+          padding: 24,
+          borderRadius: 12,
+          marginBottom: 20,
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          alignSelf: 'center',
+        }}>
+          <Text style={{
+            fontSize: 20,
+            marginBottom: 8,
+            color: '#000',
+            textAlign: 'center',
+            fontWeight: '500',
+          }}>Valor Atual:</Text>
+          <Text style={{
+            fontSize: 44,
+            fontWeight: 'bold',
+            color: '#007AFF', // azul
+            textAlign: 'center',
+          }}>
+            {realtimeLast ? (Number(realtimeLast.value ?? realtimeLast.pressao02_hx710b ?? realtimeLast.temperatura_ds18b20).toFixed(2)) : (readings[0].value.toFixed(2))}
+          </Text>
         </View>
       )}
 

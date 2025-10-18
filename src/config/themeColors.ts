@@ -21,7 +21,7 @@
 
 // ⚠️  IMPORTANTE: MUDE ESTE NÚMERO TODA VEZ QUE ALTERAR CORES!
 // Exemplo: 1.0.1 → 1.0.2 → 1.0.3 (isso força o app a recarregar)
-export const THEME_VERSION = '1.0.2';
+export const THEME_VERSION = '1.0.3';
 
 // ╔══════════════════════════════════════════════════════════════════════════════╗
 // ║                    TELA DE DETALHES DO SENSOR                                ║
@@ -42,7 +42,7 @@ export const SENSOR_DETAIL_COLORS = {
   
   // 📊 BOX "VALOR ATUAL"
   // Box que mostra o valor atual da leitura do sensor
-  currentValueBackground: '#ffffff8f',
+  currentValueBackground: '#a3a3adee',
   
   // 📈 BOX DO GRÁFICO
   // Box que contém o gráfico de linha com histórico
@@ -79,7 +79,7 @@ export const SENSOR_DETAIL_TEXT_COLORS = {
   
   // 📊 LABEL "VALOR ATUAL:" (Box de valor atual)
   // Texto do label "Valor Atual:" dentro do box
-  currentValueLabelText: '#1b49f0ff',
+  currentValueLabelText: '#000000',
   // NOTA: O valor numérico (ex: "45.67") tem cor dinâmica baseada no status:
   //       Verde (#007AFF) = Normal, Amarelo (#FFC107) = Alerta, Vermelho (#FF3B30) = Crítico
   
@@ -187,7 +187,7 @@ export const METRIC_SCREEN_COLORS = {
   
   // 📊 CARDS DE MÉTRICAS
   // Cor de fundo dos cards que exibem cada métrica
-  cardBackground: '#1C1C1E',
+  cardBackground: '#D1D1D6',
   
   // 🔘 BOTÕES DE AÇÃO
   // Cor de fundo dos botões de ação
@@ -208,15 +208,15 @@ export const METRIC_SCREEN_TEXT_COLORS = {
   
   // 🏷️  LABEL DO CARD
   // Texto do label dentro do card: "Temperatura", "Pressão", etc
-  labelText: '#8E8E93',
+  labelText: '#000000',
   
   // 📊 VALOR DA MÉTRICA
   // Texto grande com o valor numérico da métrica
-  valueText: '#FFFFFF',
+  valueText: '#000000',
   
   // 🕐 TIMESTAMP
   // Texto com data/hora da última atualização
-  timestampText: '#8E8E93',
+  timestampText: '#3C3C3E',
   
   // 🔘 TEXTO DOS BOTÕES DE AÇÃO
   // Texto dentro dos botões de ação

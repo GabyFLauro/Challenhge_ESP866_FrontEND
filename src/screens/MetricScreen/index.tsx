@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import AlertRedIcon from '../../components/AlertRedIcon';
 import { Text } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
@@ -182,28 +183,51 @@ export const MetricScreen: React.FC = () => {
         </AnimatedButton>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.label}>Valor atual</Text>
-        <View style={styles.valueContainer}>
+      <View style={{
+        backgroundColor: '#D1D1D6',
+        borderRadius: 12,
+        marginHorizontal: 16,
+        marginTop: 12,
+        padding: 24,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <Text style={{
+          color: '#000',
+          marginBottom: 8,
+          textAlign: 'center',
+          fontSize: 20,
+          fontWeight: '700',
+        }}>Valor atual</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           {isBoolean ? (
             <>
-              <Text style={[styles.value, { color: '#007AFF' }]}>{boolLabel}</Text>
-              <Text style={styles.statusIcon}>ℹ️</Text>
+              <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>{boolLabel}</Text>
+              <Text style={{ marginLeft: 8, fontSize: 24 }}>ℹ️</Text>
             </>
           ) : (
             <>
-              <Text style={styles.value}>
+              <Text style={{ fontSize: 44, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>
                 {lastValue !== undefined ? `${lastValue.toFixed(2)}${meta.unit ? ' ' + meta.unit : ''}` : '—'}
               </Text>
               {lastValue !== undefined && (() => {
                 const result = classifyMetric(keyName, Number(lastValue));
-                const icon = result.level === 'normal' ? '✅' : result.level === 'alerta' ? '⚠️' : '🚨';
-                return <Text style={styles.statusIcon}>{icon}</Text>;
+                if (result.level === 'normal') {
+                  return <Text style={{ marginLeft: 10, fontSize: 44 }}>✅</Text>;
+                } else if (result.level === 'alerta') {
+                  return <Text style={{ marginLeft: 10, fontSize: 44 }}>⚠️</Text>;
+                } else {
+                  return (
+                    <View style={{ marginLeft: 10 }}>
+                      <AlertRedIcon size={44} />
+                    </View>
+                  );
+                }
               })()}
             </>
           )}
         </View>
-        <Text style={styles.timestamp}>Última atualização: {lastTs}</Text>
+        <Text style={{ marginTop: 6, color: '#3C3C3E', textAlign: 'center' }}>Última atualização: {lastTs}</Text>
       </View>
 
       {/* Gráfico por tempo com timestamps no eixo X */}

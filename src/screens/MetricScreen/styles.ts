@@ -49,18 +49,32 @@ export const styles = StyleSheet.create({
     marginTop: 12,
     padding: 16,
     borderRadius: 12,
+    alignItems: 'center',  // Centraliza horizontalmente
+    justifyContent: 'center',  // Centraliza verticalmente
   },
   label: {
     color: TEXT_COLORS.labelText,
     marginBottom: 8,
+    textAlign: 'center',  // Centraliza o texto
+  },
+  valueContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   value: {
     color: TEXT_COLORS.valueText,
     fontSize: 28,
     fontWeight: '600',
+    textAlign: 'center',  // Centraliza o texto
+  },
+  statusIcon: {
+    marginLeft: 8,
+    fontSize: 24,
   },
   timestamp: {
     marginTop: 6,
     color: TEXT_COLORS.timestampText,
+    textAlign: 'center',  // Centraliza o texto
   },
 });
