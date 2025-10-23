@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions, Modal } from 'react-native';
 import AlertRedIcon from '../../components/AlertRedIcon';
 import { Text } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
@@ -13,6 +13,9 @@ import { historyService, SensorHistoryItem } from '../../services/history';
 import { classifyMetric, vibrationDiagnostics } from '../../utils/alerts';
 import AnimatedButton from '../../components/AnimatedButton';
 import FeedbackIndicator from '../../components/FeedbackIndicator';
+import { Ionicons } from '@expo/vector-icons';
+import ReasonsIconSvg from '../../components/ReasonsIconSvg';
+import LightBulbIconSvg from '../../components/LightBulbIconSvg';
 // import { useLoading } from '../../contexts/LoadingContext';
 
 type RouteParams = {
@@ -53,7 +56,7 @@ export const MetricScreen: React.FC = () => {
   const [history, setHistory] = useState<SensorHistoryItem[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const [period, setPeriod] = useState<'5min' | '1h' | '24h' | '30h' | '7d' | '30d' | 'custom'>('24h');
+  const [period, setPeriod] = useState<'5min' | '1h' | '24h' | '30h' | '7d' | '30d' | 'custom'>('1h');
   const [showDatePicker, setShowDatePicker] = useState<'start' | 'end' | null>(null);
   const [customStart, setCustomStart] = useState<Date | null>(null);
   const [customEnd, setCustomEnd] = useState<Date | null>(null);
@@ -64,6 +67,14 @@ export const MetricScreen: React.FC = () => {
     type: 'success' | 'error' | 'warning' | 'info';
     message: string;
   }>({ visible: false, type: 'info', message: '' });
+
+  // Modal states
+  const [modalReasonsVisible, setModalReasonsVisible] = useState(false);
+  const [modalSolutionsVisible, setModalSolutionsVisible] = useState(false);
+  const [modalContent, setModalContent] = useState<string[]>([]);
+  
+  // Histórico retrátil
+  const [historyCollapsed, setHistoryCollapsed] = useState(true);
 
   const last = lastReading || null;
   const lastValue = useMemo(() => {
@@ -87,6 +98,36 @@ export const MetricScreen: React.FC = () => {
 
   // Flag to track initial load
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Atualizar histórico automaticamente quando uma nova leitura chega
+  useEffect(() => {
+    if (!lastReading || lastValue === undefined) return;
+    
+    // Criar novo item de histórico a partir da leitura atual
+    const dataHora = lastReading.data_hora || lastReading.timestamp || lastReading.dataHora || lastReading.createdAt || new Date().toISOString();
+    
+    // Mapear o valor para o campo correto baseado no keyName
+    const newHistoryItem: SensorHistoryItem = {
+      dataHora,
+      ...(keyName === 'temperatura_ds18b20' && { temperatura: lastValue }),
+      ...(keyName === 'pressao02_hx710b' && { pressao: lastValue }),
+      ...(keyName === 'vibracao_vib_x' && { vibracaoX: lastValue }),
+      ...(keyName === 'vibracao_vib_y' && { vibracaoY: lastValue }),
+      ...(keyName === 'vibracao_vib_z' && { vibracaoZ: lastValue }),
+      ...(keyName === 'velocidade_m_s' && { velocidade: lastValue }),
+      ...(keyName === 'chave_fim_de_curso' && { ativo: lastValue === 1 }),
+    };
+
+    // Adicionar ao histórico sem duplicar (verificar se já existe esse dataHora)
+    setHistory(prev => {
+      const exists = prev.some(item => item.dataHora === dataHora);
+      if (exists) return prev;
+      
+      // Adicionar novo item e manter os últimos 100 registros
+      const updated = [...prev, newHistoryItem].slice(-100);
+      return updated;
+    });
+  }, [lastReading, lastValue, keyName]);
 
   // Show loading when screen first mounts
   // useEffect(() => {
@@ -276,10 +317,15 @@ export const MetricScreen: React.FC = () => {
             chartConfig={{
               backgroundGradientFrom: '#1C1C1E',
               backgroundGradientTo: '#1C1C1E',
-              color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+              color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
               labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              strokeWidth: 2,
+              strokeWidth: 3,
               decimalPlaces: 1,
+              propsForDots: {
+                r: '6',
+                strokeWidth: '3',
+                stroke: '#66fdf1',
+              },
             }}
             bezier
             style={{ borderRadius: 8, marginTop: 8 }}
@@ -296,77 +342,6 @@ export const MetricScreen: React.FC = () => {
         )}
       </View>
 
-      {/* Histórico e gráfico por tempo */}
-      <View style={styles.card}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Text style={styles.label}>Histórico (últimas leituras)</Text>
-          <AnimatedButton onPress={() => {
-            setLoadingHistory(true);
-            let inicio: Date | undefined;
-            let fim: Date | undefined = new Date();
-            if (period === '1h') {
-              inicio = new Date(Date.now() - 60 * 60 * 1000);
-            } else if (period === '24h') {
-              inicio = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            } else if (period === '7d') {
-              inicio = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-            } else if (period === '30d') {
-              inicio = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-            } else if (period === 'custom' && customStart && customEnd) {
-              inicio = customStart;
-              fim = customEnd;
-            }
-            historyService.getHistory(keyName, inicio, fim, 100)
-              .then((d) => {
-                setHistory(d);
-                setHistoryError(null);
-              })
-              .catch((e) => {
-                const errorMsg = e instanceof Error ? e.message : 'Falha ao carregar histórico';
-                setHistoryError(errorMsg);
-              })
-              .finally(() => setLoadingHistory(false));
-          }} style={styles.actionButton}>
-            <Text style={styles.actionButtonText}>Atualizar</Text>
-          </AnimatedButton>
-        </View>
-
-        {loadingHistory ? (
-          <ActivityIndicator color="#007AFF" style={{ marginVertical: 8 }} />
-        ) : historyError ? (
-          <Text style={{ color: '#FF3B30' }}>{historyError && historyError.includes('Failed to fetch') ? 'Não foi possível conectar ao backend. Verifique a URL e se o backend está rodando.' : historyError}</Text>
-        ) : (
-          <>
-
-
-            {/* Lista das últimas 20 leituras */}
-            <View style={{ marginTop: 12 }}>
-              {history.slice(-20).map((r, idx) => {
-                let value: number | string | undefined = '';
-                if (keyName === 'temperatura_ds18b20') value = r.temperatura;
-                else if (keyName === 'pressao02_hx710b') value = r.pressao;
-                else if (keyName === 'vibracao_vib_x') value = r.vibracaoX;
-                else if (keyName === 'vibracao_vib_y') value = r.vibracaoY;
-                else if (keyName === 'vibracao_vib_z') value = r.vibracaoZ;
-                else if (keyName === 'velocidade_m_s') value = r.velocidade;
-                else if (keyName === 'chave_fim_de_curso') value = r.ativo ? 'ATIVADA' : 'DESATIVADA';
-                return (
-                  <View key={r.dataHora + idx} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#2C2C2E' }}>
-                    <Text style={{ color: '#FFFFFF' }}>{new Date(r.dataHora).toLocaleString()}</Text>
-                    <Text style={{ color: '#34C759', fontWeight: '600' }}>
-                      {typeof value === 'number' ? value.toFixed(2) : value}{meta.unit ? ' ' + meta.unit : ''}
-                    </Text>
-                  </View>
-                );
-              })}
-              {history.length === 0 && (
-                <Text style={{ color: '#8E8E93' }}>Sem leituras registradas</Text>
-              )}
-            </View>
-          </>
-        )}
-      </View>
-
       {/* Cards de alerta, motivos e soluções */}
       <View style={styles.card}>
         <Text style={styles.label}>Status e Diagnóstico</Text>
@@ -380,29 +355,59 @@ export const MetricScreen: React.FC = () => {
               : undefined;
             return (
               <>
-                <View style={{ backgroundColor: '#2C2C2E', padding: 12, borderRadius: 8 }}>
-                  <Text style={{ color, fontWeight: '700' }}>{result.label} • {result.statusText}</Text>
+                <View style={{ backgroundColor: '#2C2C2E', padding: 16, borderRadius: 8 }}>
+                  <Text style={{ color, fontWeight: '700', fontSize: 18 }}>{result.label} • {result.statusText}</Text>
                   {result.explanation && (
-                    <Text style={{ color: '#FFFFFF', marginTop: 6 }}>{result.explanation}</Text>
+                    <Text style={{ color: '#FFFFFF', marginTop: 8, fontSize: 16, lineHeight: 24 }}>{result.explanation}</Text>
                   )}
                 </View>
                 {(diag || result.reasons || result.solutions) && (
-                  <View style={{ marginTop: 12 }}>
+                  <View style={{ marginTop: 12, flexDirection: 'row', gap: 8 }}>
                     {(diag?.reasons?.length || result.reasons?.length) && (
-                      <View style={{ marginBottom: 8 }}>
-                        <Text style={{ color: '#8E8E93', marginBottom: 6 }}>Possíveis motivos</Text>
-                        {(diag?.reasons || result.reasons || []).map((r, i) => (
-                          <Text key={`reason_${i}`} style={{ color: '#FFFFFF' }}>• {r}</Text>
-                        ))}
-                      </View>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setModalContent(diag?.reasons || result.reasons || []);
+                          setModalReasonsVisible(true);
+                        }}
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#2C2C2E',
+                          padding: 12,
+                          borderRadius: 8,
+                          alignItems: 'center',
+                          flexDirection: 'row',
+                          justifyContent: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <ReasonsIconSvg size={22} color="#d1d1d6" />
+                        <Text style={{ color: '#007AFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
+                          Possíveis motivos
+                        </Text>
+                      </TouchableOpacity>
                     )}
                     {(diag?.solutions?.length || result.solutions?.length) && (
-                      <View>
-                        <Text style={{ color: '#8E8E93', marginBottom: 6 }}>Possíveis soluções</Text>
-                        {(diag?.solutions || result.solutions || []).map((s, i) => (
-                          <Text key={`solution_${i}`} style={{ color: '#FFFFFF' }}>• {s}</Text>
-                        ))}
-                      </View>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setModalContent(diag?.solutions || result.solutions || []);
+                          setModalSolutionsVisible(true);
+                        }}
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#2C2C2E',
+                          padding: 12,
+                          borderRadius: 8,
+                          alignItems: 'center',
+                          flexDirection: 'row',
+                          justifyContent: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <LightBulbIconSvg size={22} color="#d1d1d6" />
+                        <Text style={{ color: '#007AFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
+                          Possíveis soluções
+                        </Text>
+                      </TouchableOpacity>
                     )}
                   </View>
                 )}
@@ -413,7 +418,173 @@ export const MetricScreen: React.FC = () => {
           <Text style={{ color: '#8E8E93' }}>Sem leitura atual para diagnóstico.</Text>
         )}
       </View>
+
+      {/* Histórico e gráfico por tempo */}
+      <View style={styles.card}>
+        <TouchableOpacity 
+          onPress={() => setHistoryCollapsed(prev => !prev)}
+          style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
+        >
+          <Text style={[styles.label, { fontSize: 16 }]}>Histórico (últimas leituras)</Text>
+          <Ionicons 
+            name={historyCollapsed ? 'chevron-forward' : 'chevron-down'} 
+            size={24} 
+            color="#FFFFFF"
+          />
+        </TouchableOpacity>
+
+        {/* Mostrar última leitura mesmo quando retraído */}
+        {historyCollapsed && history.length > 0 && (
+          <View style={{ marginTop: 4 }}>
+            {(() => {
+              const r = history[history.length - 1];
+              let value: number | string | undefined = '';
+              if (keyName === 'temperatura_ds18b20') value = r.temperatura;
+              else if (keyName === 'pressao02_hx710b') value = r.pressao;
+              else if (keyName === 'vibracao_vib_x') value = r.vibracaoX;
+              else if (keyName === 'vibracao_vib_y') value = r.vibracaoY;
+              else if (keyName === 'vibracao_vib_z') value = r.vibracaoZ;
+              else if (keyName === 'velocidade_m_s') value = r.velocidade;
+              else if (keyName === 'chave_fim_de_curso') value = r.ativo ? 'ATIVADA' : 'DESATIVADA';
+             
+               // Determina a cor baseada no estado
+               let valueColor = '#34C759'; // verde padrão (normal)
+               if (typeof value === 'number') {
+                 const classification = classifyMetric(keyName, value);
+                 if (classification.level === 'alerta') {
+                   valueColor = '#FFD60A'; // amarelo
+                 } else if (classification.level === 'falha') {
+                   valueColor = '#FF3B30'; // vermelho
+                 }
+               }
+             
+              return (
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#2C2C2E' }}>
+                  <Text style={{ color: '#FFFFFF', fontSize: 15 }}>{new Date(r.dataHora).toLocaleString()}</Text>
+                    <Text style={{ color: valueColor, fontWeight: '600', fontSize: 15 }}>
+                    {typeof value === 'number' ? value.toFixed(2) : value}{meta.unit ? ' ' + meta.unit : ''}
+                  </Text>
+                </View>
+              );
+            })()}
+          </View>
+        )}
+
+        {!historyCollapsed && (
+          <>
+            {loadingHistory ? (
+              <ActivityIndicator color="#007AFF" style={{ marginVertical: 8 }} />
+            ) : historyError ? (
+              <Text style={{ color: '#FF3B30' }}>{historyError && historyError.includes('Failed to fetch') ? 'Não foi possível conectar ao backend. Verifique a URL e se o backend está rodando.' : historyError}</Text>
+            ) : (
+              <>
+
+
+                {/* Lista das últimas 20 leituras */}
+                <View style={{ marginTop: 12 }}>
+              {history.slice(-20).map((r, idx) => {
+                let value: number | string | undefined = '';
+                if (keyName === 'temperatura_ds18b20') value = r.temperatura;
+                else if (keyName === 'pressao02_hx710b') value = r.pressao;
+                else if (keyName === 'vibracao_vib_x') value = r.vibracaoX;
+                else if (keyName === 'vibracao_vib_y') value = r.vibracaoY;
+                else if (keyName === 'vibracao_vib_z') value = r.vibracaoZ;
+                else if (keyName === 'velocidade_m_s') value = r.velocidade;
+                else if (keyName === 'chave_fim_de_curso') value = r.ativo ? 'ATIVADA' : 'DESATIVADA';
+               
+                 // Determina a cor baseada no estado
+                 let valueColor = '#34C759'; // verde padrão (normal)
+                 if (typeof value === 'number') {
+                   const classification = classifyMetric(keyName, value);
+                   if (classification.level === 'alerta') {
+                     valueColor = '#FFD60A'; // amarelo
+                   } else if (classification.level === 'falha') {
+                     valueColor = '#FF3B30'; // vermelho
+                   }
+                 }
+               
+                return (
+                  <View key={r.dataHora + idx} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#2C2C2E' }}>
+                    <Text style={{ color: '#FFFFFF', fontSize: 15 }}>{new Date(r.dataHora).toLocaleString()}</Text>
+                      <Text style={{ color: valueColor, fontWeight: '600', fontSize: 15 }}>
+                      {typeof value === 'number' ? value.toFixed(2) : value}{meta.unit ? ' ' + meta.unit : ''}
+                    </Text>
+                  </View>
+                );
+              })}
+              {history.length === 0 && (
+                <Text style={{ color: '#8E8E93' }}>Sem leituras registradas</Text>
+              )}
+            </View>
+              </>
+            )}
+          </>
+        )}
+      </View>
+
+      {/* Espaçamento no final */}
+      <View style={{ height: 40 }} />
       
+      {/* Modal para Possíveis Motivos */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalReasonsVisible}
+        onRequestClose={() => setModalReasonsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <ReasonsIconSvg size={32} color="#d1d1d6" />
+              <Text style={styles.modalTitle}>Possíveis motivos</Text>
+            </View>
+            <ScrollView style={{ maxHeight: 400, marginTop: 16 }}>
+              {modalContent.map((item, index) => (
+                <Text key={`reason_${index}`} style={styles.modalItem}>
+                  • {item}
+                </Text>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setModalReasonsVisible(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para Possíveis Soluções */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalSolutionsVisible}
+        onRequestClose={() => setModalSolutionsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+              <LightBulbIconSvg size={32} color="#d1d1d6" />
+              <Text style={styles.modalTitle}>Possíveis soluções</Text>
+            </View>
+            <ScrollView style={{ maxHeight: 400, marginTop: 16 }}>
+              {modalContent.map((item, index) => (
+                <Text key={`solution_${index}`} style={styles.modalItem}>
+                  • {item}
+                </Text>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              onPress={() => setModalSolutionsVisible(false)}
+              style={styles.modalCloseButton}
+            >
+              <Text style={styles.modalCloseButtonText}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Feedback Indicator */}
       <FeedbackIndicator
         visible={feedback.visible}
@@ -484,5 +655,51 @@ const styles = StyleSheet.create({
   timestamp: {
     marginTop: 6,
     color: '#8E8E93',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#1C1C1E',
+    borderRadius: 16,
+    padding: 20,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  modalItem: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 12,
+    lineHeight: 24,
+  },
+  modalCloseButton: {
+    marginTop: 20,
+    backgroundColor: '#007AFF',
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

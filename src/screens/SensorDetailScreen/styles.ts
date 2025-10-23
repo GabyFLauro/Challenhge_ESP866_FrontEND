@@ -137,10 +137,21 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 10,
   },
+  historyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  historyHeaderIcon: {
+    fontSize: 18,
+    color: TEXT_COLORS.historyTitleText,
+    marginLeft: 8,
+  },
   historyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 0,
     color: TEXT_COLORS.historyTitleText,
   },
   historyItem: {

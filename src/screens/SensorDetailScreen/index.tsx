@@ -10,6 +10,7 @@ import { readingsService } from '../../services/readings';
 import { useSensorDetail } from '../../hooks/useSensorDetail';
 import { useSensorRealtime } from '../../contexts/SensorRealtimeContext';
 import LoadingOverlay from '../../components/LoadingOverlay';
+import { classifyMetric } from '../../utils/alerts';
 
 // Função auxiliar para cores RGBA
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
@@ -65,6 +66,7 @@ export const SensorDetailScreen = () => {
   const realtimeBuffer = realtime ? realtime.getBuffer(sensorId) : [];
   const realtimeLast = realtime ? realtime.getLast(sensorId) : null;
   const [posting, setPosting] = React.useState<boolean>(false);
+  const [historyCollapsed, setHistoryCollapsed] = React.useState<boolean>(true);
 
   const handleUpdate = () => { load(); };
 
@@ -310,29 +312,44 @@ export const SensorDetailScreen = () => {
       </View>
 
       <View style={styles.historyContainer}>
-        <Text style={styles.historyTitle}>Histórico ({sortedReadings.length} leituras)</Text>
-        {sortedReadings.length > 0 ? (
-          sortedReadings.map((data, index) => (
-            <View key={data.id || index} style={styles.historyItem}>
-              <Text style={styles.historyText}>{new Date(data.timestamp).toLocaleString()}</Text>
-              <Text style={styles.historyText}>
-                {data.value.toFixed(2)} {sensor?.unit || ''}
-              </Text>
-            </View>
-          ))
-        ) : (
-          <View style={styles.noDataContainer}>
-            <Text style={styles.noDataText}>Nenhuma leitura registrada</Text>
-            <Text style={styles.noDataSubtext}>
-              Use o botão "Registrar Leitura" para adicionar dados
-            </Text>
-          </View>
-        )}
-
-        {/* botão para carregar próxima página */}
-        <TouchableOpacity style={[styles.updateButton, { marginTop: 12 }]} onPress={() => loadMore()}>
-          <Text style={styles.updateButtonText}>Carregar mais</Text>
+        <TouchableOpacity
+          onPress={() => setHistoryCollapsed(prev => !prev)}
+          style={styles.historyHeader}
+        >
+          <Text style={styles.historyTitle}>Histórico ({sortedReadings.length} leituras)</Text>
+          <Ionicons 
+            name={historyCollapsed ? 'chevron-forward' : 'chevron-down'} 
+            size={24} 
+            color="#FFFFFF"
+          />
         </TouchableOpacity>
+
+        {!historyCollapsed && (
+          <>
+            {sortedReadings.length > 0 ? (
+              sortedReadings.map((data, index) => (
+                <View key={data.id || index} style={styles.historyItem}>
+                  <Text style={styles.historyText}>{new Date(data.timestamp).toLocaleString()}</Text>
+                  <Text style={styles.historyText}>
+                    {data.value.toFixed(2)} {sensor?.unit || ''}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <View style={styles.noDataContainer}>
+                <Text style={styles.noDataText}>Nenhuma leitura registrada</Text>
+                <Text style={styles.noDataSubtext}>
+                  Use o botão "Registrar Leitura" para adicionar dados
+                </Text>
+              </View>
+            )}
+
+            {/* botão para carregar próxima página */}
+            <TouchableOpacity style={[styles.updateButton, { marginTop: 12 }]} onPress={() => loadMore()}>
+              <Text style={styles.updateButtonText}>Carregar mais</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
 
       <TouchableOpacity style={styles.updateButton} onPress={handleUpdate}>
