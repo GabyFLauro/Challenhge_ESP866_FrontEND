@@ -66,7 +66,7 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
         chartConfig={{
           backgroundGradientFrom: '#1C1C1E',
           backgroundGradientTo: '#1C1C1E',
-          color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+          color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
           labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           strokeWidth: 2,
         }}

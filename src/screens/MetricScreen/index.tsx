@@ -380,7 +380,7 @@ export const MetricScreen: React.FC = () => {
                           gap: 8,
                         }}
                       >
-                        <ReasonsIconSvg size={22} color="#d1d1d6" />
+                        <ReasonsIconSvg size={36} color="#d1d1d6" />
                         <Text style={{ color: '#007AFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
                           Possíveis motivos
                         </Text>
@@ -403,7 +403,7 @@ export const MetricScreen: React.FC = () => {
                           gap: 8,
                         }}
                       >
-                        <LightBulbIconSvg size={22} color="#d1d1d6" />
+                        <LightBulbIconSvg size={36} color="#d1d1d6" />
                         <Text style={{ color: '#007AFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
                           Possíveis soluções
                         </Text>
@@ -534,8 +534,8 @@ export const MetricScreen: React.FC = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-              <ReasonsIconSvg size={32} color="#d1d1d6" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, alignSelf: 'center' }}>
+              <ReasonsIconSvg size={48} color="#d1d1d6" />
               <Text style={styles.modalTitle}>Possíveis motivos</Text>
             </View>
             <ScrollView style={{ maxHeight: 400, marginTop: 16 }}>
@@ -564,8 +564,8 @@ export const MetricScreen: React.FC = () => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-              <LightBulbIconSvg size={32} color="#d1d1d6" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, alignSelf: 'center' }}>
+              <LightBulbIconSvg size={48} color="#d1d1d6" />
               <Text style={styles.modalTitle}>Possíveis soluções</Text>
             </View>
             <ScrollView style={{ maxHeight: 400, marginTop: 16 }}>
