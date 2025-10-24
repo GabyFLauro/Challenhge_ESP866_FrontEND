@@ -56,7 +56,17 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
     <View style={cardStyle}>
       <Text style={labelTextStyle}>{LABELS[keyName] || keyName}</Text>
       <LineChart
-        data={{ labels: data.labels, datasets: [{ data: data.values }] }}
+        data={{
+          labels: data.labels,
+          datasets: [
+            {
+              data: data.values,
+              // provide color per-dataset so the chart kit can use it for the shadow/fill
+              color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
+              strokeWidth: 2,
+            },
+          ],
+        }}
         width={screenWidth}
         height={height}
         withDots={true}

@@ -292,7 +292,9 @@ export const MetricScreen: React.FC = () => {
             height={220}
             chartConfig={getSharedLineChartConfig({ strokeWidth: 3, decimalPlaces: 1 })}
             bezier
-            withShadow={true}
+            // Disable fill (shadow) for the temperature metric specifically so
+            // the temperature screen accessed via the sidebar is NOT filled.
+            withShadow={keyName !== 'temperatura_ds18b20'}
             style={{ borderRadius: 8, marginTop: 8 }}
             withDots={true}
             withInnerLines={false}

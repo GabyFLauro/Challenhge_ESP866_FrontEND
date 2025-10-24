@@ -15,7 +15,8 @@ export const getSharedLineChartConfig = (opts: LineChartConfigOptions = {}): Abs
     fillShadowGradientFromOpacity: 1,
     fillShadowGradientTo: '#66fdf1',
     fillShadowGradientToOpacity: 0.3,
-    useShadowColorFromDataset: false,
+  // allow shadow (fill) to use the dataset color when provided
+  useShadowColorFromDataset: true,
     color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     strokeWidth,
