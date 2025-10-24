@@ -210,7 +210,7 @@ export const MetricScreen: React.FC = () => {
   const step = Math.ceil(rawLabels.length / 6) || 1; // mostra no máximo 6 labels
   const labels = rawLabels.map((label, idx) => (idx % step === 0 ? label : ''));
   const data = hist.map(getValue).filter(v => v !== null) as number[];
-  return { labels, datasets: [{ data, color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})` }] };
+  return { labels, datasets: [{ data }] };
   }, [history, keyName]);
 
   return (
@@ -292,6 +292,7 @@ export const MetricScreen: React.FC = () => {
             height={220}
             chartConfig={getSharedLineChartConfig({ strokeWidth: 3, decimalPlaces: 1 })}
             bezier
+            withShadow={true}
             style={{ borderRadius: 8, marginTop: 8 }}
             withDots={true}
             withInnerLines={false}

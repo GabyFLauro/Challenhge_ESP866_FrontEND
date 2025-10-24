@@ -248,11 +248,12 @@ export const SensorDetailScreen = () => {
           // se houver buffer realtime com pelo menos 2 pontos, desenha a partir dele
           (realtimeBuffer && realtimeBuffer.length >= 2) ? (
             <LineChart
-              data={{ labels: realtimeBuffer.map((_, i) => `${i+1}`), datasets: [{ data: realtimeBuffer.map(d => Number(d.value ?? d.pressao02_hx710b ?? d.temperatura_ds18b20 ?? d.vibracao_vib_x ?? d.vibracao_vib_y ?? d.vibracao_vib_z ?? 0)), color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})` }] }}
+              data={{ labels: realtimeBuffer.map((_, i) => `${i+1}`), datasets: [{ data: realtimeBuffer.map(d => Number(d.value ?? d.pressao02_hx710b ?? d.temperatura_ds18b20 ?? d.vibracao_vib_x ?? d.vibracao_vib_y ?? d.vibracao_vib_z ?? 0)) }] }}
               width={chartWidth}
               height={chartHeight}
               chartConfig={getLineChartConfig(chartFontSize)}
               bezier
+              withShadow={true}
               style={styles.chart}
               withInnerLines={false}
               withOuterLines={false}
@@ -269,6 +270,7 @@ export const SensorDetailScreen = () => {
               height={chartHeight}
               chartConfig={getLineChartConfig(chartFontSize)}
               bezier
+              withShadow={true}
               style={styles.chart}
               withInnerLines={false}
               withOuterLines={false}

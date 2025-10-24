@@ -8,12 +8,14 @@ export type LineChartConfigOptions = {
 export const getSharedLineChartConfig = (opts: LineChartConfigOptions = {}): AbstractChartConfig => {
   const { strokeWidth = 3, decimalPlaces = 1 } = opts;
   return {
+    backgroundColor: '#1C1C1E',
     backgroundGradientFrom: '#1C1C1E',
     backgroundGradientTo: '#1C1C1E',
     fillShadowGradientFrom: '#66fdf1',
-    fillShadowGradientFromOpacity: 0.8,
-    fillShadowGradientTo: '#1C1C1E',
-    fillShadowGradientToOpacity: 0.2,
+    fillShadowGradientFromOpacity: 1,
+    fillShadowGradientTo: '#66fdf1',
+    fillShadowGradientToOpacity: 0.3,
+    useShadowColorFromDataset: false,
     color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     strokeWidth,

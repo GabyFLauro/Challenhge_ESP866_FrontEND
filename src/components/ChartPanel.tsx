@@ -56,10 +56,11 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
     <View style={cardStyle}>
       <Text style={labelTextStyle}>{LABELS[keyName] || keyName}</Text>
       <LineChart
-        data={{ labels: data.labels, datasets: [{ data: data.values, color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})` }] }}
+        data={{ labels: data.labels, datasets: [{ data: data.values }] }}
         width={screenWidth}
         height={height}
         withDots={true}
+        withShadow={true}
         withInnerLines={false}
         withOuterLines={false}
         withHorizontalLabels={false}
