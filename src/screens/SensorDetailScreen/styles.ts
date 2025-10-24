@@ -166,7 +166,7 @@ export const styles = StyleSheet.create({
     color: TEXT_COLORS.historyItemText,
   },
   updateButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0328d4',
     padding: 16,
     borderRadius: 8,
     marginTop: 20,

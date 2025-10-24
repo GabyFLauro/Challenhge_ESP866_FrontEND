@@ -17,7 +17,8 @@ export const Logo = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginLeft: 10,
+    alignItems: 'center',
+    marginVertical: 10,
   },
   circleContainer: {
     width: 60,
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#007AFF',
+    borderColor: '#0328d4',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

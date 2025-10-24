@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   chipSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0328d4',
   },
   chipText: {
     color: '#FFFFFF',

@@ -104,7 +104,7 @@ export function sortReadingsByTimestampDesc(readings: ReadingDTO[]): ReadingDTO[
 
 export function buildChartData(readings: ReadingDTO[], maxPoints: number = 8): {
   labels: string[];
-  datasets: { data: number[] }[];
+  datasets: { data: number[]; color?: (opacity: number) => string }[];
 } {
   const sorted = sortReadingsByTimestampAsc(readings);
   const slice = sorted.slice(-maxPoints);
@@ -116,7 +116,7 @@ export function buildChartData(readings: ReadingDTO[], maxPoints: number = 8): {
     return `${date.getMinutes().toString().padStart(2, '0')}`;
   });
   const data = slice.map((r) => r.value);
-  return { labels, datasets: [{ data }] };
+  return { labels, datasets: [{ data, color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})` }] };
 }
 
 

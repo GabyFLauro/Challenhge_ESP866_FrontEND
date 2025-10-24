@@ -4,6 +4,7 @@ import AlertRedIcon from '../../components/AlertRedIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../../components/Logo';
 import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
+import { getSharedLineChartConfig } from '../../utils/chartConfig';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { readingsService } from '../../services/readings';
@@ -26,31 +27,12 @@ const getChartDimensions = (screenWidth: number) => {
 };
 
 const getLineChartConfig = (fontSize: number) => ({
-  backgroundColor: '#1C1C1E',
-  backgroundGradientFrom: '#1C1C1E',
-  backgroundGradientTo: '#1C1C1E',
-  decimalPlaces: 1,
-  color: (opacity = 1) => rgba(0, 122, 255, opacity),
-  labelColor: (opacity = 1) => rgba(255, 255, 255, opacity),
-  style: {
-    borderRadius: 1,
-  },
-  propsForDots: {
-    r: '4',
-    strokeWidth: '2',
-    stroke: '#007AFF',
-  },
-  propsForLabels: {
-    fontSize: Math.max(10, fontSize - 2), // Reduzir tamanho da fonte
-  },
-  // Configurações para evitar sobreposição
-  propsForVerticalLabels: {
-    fontSize: Math.max(8, fontSize - 4),
-    rotation: 0,
-  },
-  propsForHorizontalLabels: {
-    fontSize: Math.max(8, fontSize - 4),
-  },
+  ...getSharedLineChartConfig({ strokeWidth: 3, decimalPlaces: 1 }),
+  style: { borderRadius: 1 },
+  propsForDots: { r: '4', strokeWidth: '2', stroke: '#66fdf1' },
+  propsForLabels: { fontSize: Math.max(10, fontSize - 2) },
+  propsForVerticalLabels: { fontSize: Math.max(8, fontSize - 4), rotation: 0 },
+  propsForHorizontalLabels: { fontSize: Math.max(8, fontSize - 4) },
 });
 
 export const SensorDetailScreen = () => {
@@ -104,7 +86,7 @@ export const SensorDetailScreen = () => {
   const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
-        return '#007AFF';
+        return '#0328d4';
       case 'warning':
         return '#FFC107';
       case 'error':
@@ -250,7 +232,7 @@ export const SensorDetailScreen = () => {
           <Text style={{
             fontSize: 44,
             fontWeight: 'bold',
-            color: '#007AFF', // azul
+            color: '#0328d4', // azul
             textAlign: 'center',
           }}>
             {realtimeLast ? (Number(realtimeLast.value ?? realtimeLast.pressao02_hx710b ?? realtimeLast.temperatura_ds18b20).toFixed(2)) : (readings[0].value.toFixed(2))}
@@ -261,12 +243,12 @@ export const SensorDetailScreen = () => {
       <View style={styles.chartContainer}>
         <Text style={styles.chartTitle}>Gráfico de Linha</Text>
         {loading ? (
-          <ActivityIndicator size="large" color="#007AFF" />
+          <ActivityIndicator size="large" color="#0328d4" />
         ) : (
           // se houver buffer realtime com pelo menos 2 pontos, desenha a partir dele
           (realtimeBuffer && realtimeBuffer.length >= 2) ? (
             <LineChart
-              data={{ labels: realtimeBuffer.map((_, i) => `${i+1}`), datasets: [{ data: realtimeBuffer.map(d => Number(d.value ?? d.pressao02_hx710b ?? d.temperatura_ds18b20 ?? 0)) }] }}
+              data={{ labels: realtimeBuffer.map((_, i) => `${i+1}`), datasets: [{ data: realtimeBuffer.map(d => Number(d.value ?? d.pressao02_hx710b ?? d.temperatura_ds18b20 ?? d.vibracao_vib_x ?? d.vibracao_vib_y ?? d.vibracao_vib_z ?? 0)), color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})` }] }}
               width={chartWidth}
               height={chartHeight}
               chartConfig={getLineChartConfig(chartFontSize)}

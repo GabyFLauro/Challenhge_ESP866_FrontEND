@@ -69,7 +69,7 @@ export const FeedbackIndicator: React.FC<FeedbackIndicatorProps> = ({
         return { backgroundColor: '#FF9F0A', icon: '⚠️' };
       case 'info':
       default:
-        return { backgroundColor: '#007AFF', icon: 'ℹ️' };
+        return { backgroundColor: '#0328d4', icon: 'ℹ️' };
     }
   };
 

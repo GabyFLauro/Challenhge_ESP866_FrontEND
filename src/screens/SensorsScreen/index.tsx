@@ -25,7 +25,7 @@ export const SensorsScreen = () => {
     const getStatusColor = (status: Sensor['status']) => {
         switch (status) {
             case 'ok':
-                return '#007AFF'; // Azul
+                return '#0328d4'; // Azul
             case 'warning':
                 return '#FFC107'; // Amarelo
             case 'error':

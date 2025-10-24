@@ -24,17 +24,23 @@ export const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 8,
+    alignItems: 'center',
+    width: '100%',
   },
   title: {
     color: TEXT_COLORS.titleText,
     marginBottom: 4,
+    textAlign: 'center',
+    width: '100%',
   },
   subtitle: {
     color: TEXT_COLORS.subtitleText,
+    textAlign: 'center',
+    width: '100%',
   },
   actionButton: {
     marginTop: 8,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     backgroundColor: COLORS.actionButtonBackground,
     paddingHorizontal: 12,
     paddingVertical: 8,

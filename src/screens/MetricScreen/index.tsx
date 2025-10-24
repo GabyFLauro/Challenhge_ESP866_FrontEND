@@ -5,6 +5,7 @@ import AlertRedIcon from '../../components/AlertRedIcon';
 import { Text } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
+import { getSharedLineChartConfig } from '../../utils/chartConfig';
 import { Logo } from '../../components/Logo';
 import ChartPanel from '../../components/ChartPanel';
 import { useSensorStream } from '../../hooks/useSensorStream';
@@ -209,7 +210,7 @@ export const MetricScreen: React.FC = () => {
   const step = Math.ceil(rawLabels.length / 6) || 1; // mostra no máximo 6 labels
   const labels = rawLabels.map((label, idx) => (idx % step === 0 ? label : ''));
   const data = hist.map(getValue).filter(v => v !== null) as number[];
-  return { labels, datasets: [{ data }] };
+  return { labels, datasets: [{ data, color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})` }] };
   }, [history, keyName]);
 
   return (
@@ -234,7 +235,7 @@ export const MetricScreen: React.FC = () => {
         justifyContent: 'center',
       }}>
         <Text style={{
-          color: '#000',
+          color: '#0000ff',
           marginBottom: 8,
           textAlign: 'center',
           fontSize: 20,
@@ -243,12 +244,12 @@ export const MetricScreen: React.FC = () => {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
           {isBoolean ? (
             <>
-              <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>{boolLabel}</Text>
+              <Text style={{ fontSize: 32, fontWeight: 'bold', color: '#000000', textAlign: 'center' }}>{boolLabel}</Text>
               <Text style={{ marginLeft: 8, fontSize: 24 }}>ℹ️</Text>
             </>
           ) : (
             <>
-              <Text style={{ fontSize: 44, fontWeight: 'bold', color: '#007AFF', textAlign: 'center' }}>
+              <Text style={{ fontSize: 44, fontWeight: 'bold', color: '#000000', textAlign: 'center' }}>
                 {lastValue !== undefined ? `${lastValue.toFixed(2)}${meta.unit ? ' ' + meta.unit : ''}` : '—'}
               </Text>
               {lastValue !== undefined && (() => {
@@ -268,7 +269,7 @@ export const MetricScreen: React.FC = () => {
             </>
           )}
         </View>
-        <Text style={{ marginTop: 6, color: '#3C3C3E', textAlign: 'center' }}>Última atualização: {lastTs}</Text>
+        <Text style={{ marginTop: 6, color: '#0000ff', textAlign: 'center' }}>Última atualização: {lastTs}</Text>
       </View>
 
       {/* Gráfico por tempo com timestamps no eixo X */}
@@ -276,57 +277,20 @@ export const MetricScreen: React.FC = () => {
         <Text style={styles.label}>Gráfico por Tempo</Text>
         {/* Filtros de período */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
-          {['5min','1h','24h','30h','7d','30d'].map(p => (
-            <TouchableOpacity key={p} onPress={() => setPeriod(p as any)} style={[styles.actionButton, period === p && { backgroundColor: '#007AFF' }]}>
+          {['1h','24h'].map(p => (
+            <TouchableOpacity key={p} onPress={() => setPeriod(p as any)} style={[styles.actionButton, period === p && { backgroundColor: '#0328d4' }]}>
               <Text style={[styles.actionButtonText, period === p && { color: '#fff' }]}>{p}</Text>
             </TouchableOpacity>
           ))}
-          <TouchableOpacity onPress={() => setPeriod('custom')} style={[styles.actionButton, period === 'custom' && { backgroundColor: '#007AFF' }]}>
-            <Text style={[styles.actionButtonText, period === 'custom' && { color: '#fff' }]}>Personalizado</Text>
-          </TouchableOpacity>
         </View>
-        {period === 'custom' && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={{ color: '#fff', marginRight: 8 }}>Início:</Text>
-            <AnimatedButton onPress={() => setShowDatePicker('start')} style={styles.actionButton}><Text style={styles.actionButtonText}>{customStart ? customStart.toLocaleString() : 'Selecionar'}</Text></AnimatedButton>
-            <Text style={{ color: '#fff', marginHorizontal: 8 }}>Fim:</Text>
-            <AnimatedButton onPress={() => setShowDatePicker('end')} style={styles.actionButton}><Text style={styles.actionButtonText}>{customEnd ? customEnd.toLocaleString() : 'Selecionar'}</Text></AnimatedButton>
-          </View>
-        )}
-        {showDatePicker && (
-          <DateTimePicker
-            value={showDatePicker === 'start' && customStart ? customStart : showDatePicker === 'end' && customEnd ? customEnd : new Date()}
-            mode="datetime"
-            display="default"
-            onChange={(event: DateTimePickerEvent, date?: Date) => {
-              setShowDatePicker(null);
-              if (date) {
-                if (showDatePicker === 'start') setCustomStart(date);
-                if (showDatePicker === 'end') setCustomEnd(date);
-              }
-            }}
-          />
-        )}
         {loadingHistory ? (
-          <ActivityIndicator color="#007AFF" style={{ marginVertical: 8 }} />
+          <ActivityIndicator color="#0328d4" style={{ marginVertical: 8 }} />
         ) : timeChart.datasets[0].data.length >= 2 ? (
           <LineChart
             data={timeChart}
             width={Dimensions.get('window').width - 64}
             height={220}
-            chartConfig={{
-              backgroundGradientFrom: '#1C1C1E',
-              backgroundGradientTo: '#1C1C1E',
-              color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
-              strokeWidth: 3,
-              decimalPlaces: 1,
-              propsForDots: {
-                r: '6',
-                strokeWidth: '3',
-                stroke: '#66fdf1',
-              },
-            }}
+            chartConfig={getSharedLineChartConfig({ strokeWidth: 3, decimalPlaces: 1 })}
             bezier
             style={{ borderRadius: 8, marginTop: 8 }}
             withDots={true}
@@ -355,10 +319,10 @@ export const MetricScreen: React.FC = () => {
               : undefined;
             return (
               <>
-                <View style={{ backgroundColor: '#2C2C2E', padding: 16, borderRadius: 8 }}>
-                  <Text style={{ color, fontWeight: '700', fontSize: 18 }}>{result.label} • {result.statusText}</Text>
+                <View style={{ backgroundColor: '#2C2C2E', padding: 16, borderRadius: 8, alignItems: 'center' }}>
+                  <Text style={{ color, fontWeight: '700', fontSize: 18, textAlign: 'center' }}>{result.label} • {result.statusText}</Text>
                   {result.explanation && (
-                    <Text style={{ color: '#FFFFFF', marginTop: 8, fontSize: 16, lineHeight: 24 }}>{result.explanation}</Text>
+                    <Text style={{ color: '#FFFFFF', marginTop: 8, fontSize: 16, lineHeight: 24, textAlign: 'center' }}>{result.explanation}</Text>
                   )}
                 </View>
                 {(diag || result.reasons || result.solutions) && (
@@ -371,7 +335,7 @@ export const MetricScreen: React.FC = () => {
                         }}
                         style={{
                           flex: 1,
-                          backgroundColor: '#2C2C2E',
+                          backgroundColor: '#000f55',
                           padding: 12,
                           borderRadius: 8,
                           alignItems: 'center',
@@ -380,8 +344,8 @@ export const MetricScreen: React.FC = () => {
                           gap: 8,
                         }}
                       >
-                        <ReasonsIconSvg size={36} color="#d1d1d6" />
-                        <Text style={{ color: '#007AFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
+                        <ReasonsIconSvg size={36} color="#FFFFFF" />
+                        <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
                           Possíveis motivos
                         </Text>
                       </TouchableOpacity>
@@ -394,7 +358,7 @@ export const MetricScreen: React.FC = () => {
                         }}
                         style={{
                           flex: 1,
-                          backgroundColor: '#2C2C2E',
+                          backgroundColor: '#000f55',
                           padding: 12,
                           borderRadius: 8,
                           alignItems: 'center',
@@ -403,8 +367,8 @@ export const MetricScreen: React.FC = () => {
                           gap: 8,
                         }}
                       >
-                        <LightBulbIconSvg size={36} color="#d1d1d6" />
-                        <Text style={{ color: '#007AFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
+                        <LightBulbIconSvg size={36} color="#FFFFFF" />
+                        <Text style={{ color: '#FFFFFF', fontWeight: 'bold', fontSize: 16, textAlign: 'center' }}>
                           Possíveis soluções
                         </Text>
                       </TouchableOpacity>
@@ -473,7 +437,7 @@ export const MetricScreen: React.FC = () => {
         {!historyCollapsed && (
           <>
             {loadingHistory ? (
-              <ActivityIndicator color="#007AFF" style={{ marginVertical: 8 }} />
+              <ActivityIndicator color="#0328d4" style={{ marginVertical: 8 }} />
             ) : historyError ? (
               <Text style={{ color: '#FF3B30' }}>{historyError && historyError.includes('Failed to fetch') ? 'Não foi possível conectar ao backend. Verifique a URL e se o backend está rodando.' : historyError}</Text>
             ) : (
@@ -692,7 +656,7 @@ const styles = StyleSheet.create({
   },
   modalCloseButton: {
     marginTop: 20,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0328d4',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',

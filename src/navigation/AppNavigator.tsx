@@ -45,7 +45,7 @@ const DrawerNavigator = () => {
           color: '#FFFFFF',
         },
         drawerActiveBackgroundColor: '#2C2C2E',
-        drawerActiveTintColor: '#007AFF',
+        drawerActiveTintColor: '#0328d4',
         drawerInactiveTintColor: '#8E8E93',
       }}
     >
