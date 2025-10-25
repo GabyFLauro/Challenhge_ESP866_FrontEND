@@ -3,8 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, useWindowDimensio
 import AlertRedIcon from '../../components/AlertRedIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../../components/Logo';
-import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
-import { getSensorDetailChartConfig } from '../../utils/chartConfig';
+import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { readingsService } from '../../services/readings';
@@ -287,9 +286,24 @@ export const SensorDetailScreen = () => {
               width={chartWidth}
               height={chartHeight}
               chartConfig={{
-                ...getSensorDetailChartConfig(chartFontSize),
-                // Reforça o preenchimento para temperatura, vibração e pressão
-                ...((isTempOrVib || isPressure) ? { fillShadowGradientToOpacity: 0.8, fillShadowGradientFromOpacity: 1, useShadowColorFromDataset: false } : {}),
+                backgroundColor: '#1C1C1E',
+                backgroundGradientFrom: '#1C1C1E',
+                backgroundGradientTo: '#1C1C1E',
+                fillShadowGradientFrom: '#66fcf1',
+                fillShadowGradientFromOpacity: 0.7,
+                fillShadowGradientTo: 'rgba(102, 252, 241, 0.1)',
+                fillShadowGradientToOpacity: 0.1,
+                color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
+                strokeWidth: 3,
+                decimalPlaces: 1,
+                propsForDots: {
+                  r: '5',
+                  strokeWidth: '2',
+                  stroke: '#66fcf1',
+                  fill: '#66fcf1',
+                },
+                propsForLabels: { fontSize: Math.max(10, chartFontSize - 2) },
               }}
               bezier
               withShadow={true}
@@ -317,9 +331,24 @@ export const SensorDetailScreen = () => {
               width={chartWidth}
               height={chartHeight}
               chartConfig={{
-                ...getSensorDetailChartConfig(chartFontSize),
-                // Reforça o preenchimento para temperatura, vibração e pressão
-                ...((isTempOrVib || isPressure) ? { fillShadowGradientToOpacity: 0.8, fillShadowGradientFromOpacity: 1, useShadowColorFromDataset: false } : {}),
+                backgroundColor: '#1C1C1E',
+                backgroundGradientFrom: '#1C1C1E',
+                backgroundGradientTo: '#1C1C1E',
+                fillShadowGradientFrom: '#66fcf1',
+                fillShadowGradientFromOpacity: 0.7,
+                fillShadowGradientTo: 'rgba(102, 252, 241, 0.1)',
+                fillShadowGradientToOpacity: 0.1,
+                color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
+                strokeWidth: 3,
+                decimalPlaces: 1,
+                propsForDots: {
+                  r: '5',
+                  strokeWidth: '2',
+                  stroke: '#66fcf1',
+                  fill: '#66fcf1',
+                },
+                propsForLabels: { fontSize: Math.max(10, chartFontSize - 2) },
               }}
               bezier
               withShadow={true}

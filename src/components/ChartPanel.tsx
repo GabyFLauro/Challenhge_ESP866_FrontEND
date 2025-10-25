@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { getChartPanelConfig } from '../utils/chartConfig';
 
 type ChartPanelProps = {
   buffer: any[]; // array of messages
@@ -50,7 +49,7 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
     );
   }
 
-  const screenWidth = Dimensions.get('window').width - 24;
+  const screenWidth = Dimensions.get('window').width - 64;
 
   return (
     <View style={cardStyle}>
@@ -68,9 +67,27 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
         }}
         width={screenWidth}
         height={height}
-        chartConfig={getChartPanelConfig()}
-  bezier
-  withShadow={true}
+        chartConfig={{
+          backgroundColor: '#1C1C1E',
+          backgroundGradientFrom: '#1C1C1E',
+          backgroundGradientTo: '#1C1C1E',
+          fillShadowGradientFrom: '#66fcf1',
+          fillShadowGradientFromOpacity: 1,
+          fillShadowGradientTo: '#66fcf1',
+          fillShadowGradientToOpacity: 0.35,
+          color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+          labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          strokeWidth: 3,
+          decimalPlaces: 1,
+          propsForDots: {
+            r: '5',
+            strokeWidth: '2',
+            stroke: '#66fcf1',
+            fill: '#66fcf1',
+          },
+        }}
+        bezier
+        withShadow={true}
         withDots={true}
         withInnerLines={false}
         withOuterLines={false}

@@ -5,7 +5,6 @@ import AlertRedIcon from '../../components/AlertRedIcon';
 import { Text } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
-import { getMetricScreenChartConfig } from '../../utils/chartConfig';
 import { Logo } from '../../components/Logo';
 import ChartPanel from '../../components/ChartPanel';
 import { useSensorStream } from '../../hooks/useSensorStream';
@@ -302,7 +301,25 @@ export const MetricScreen: React.FC = () => {
             }}
             width={Dimensions.get('window').width - 64}
             height={220}
-            chartConfig={getMetricScreenChartConfig()}
+            chartConfig={{
+              backgroundColor: '#1C1C1E',
+              backgroundGradientFrom: '#1C1C1E',
+              backgroundGradientTo: '#1C1C1E',
+              fillShadowGradientFrom: '#66fcf1',
+              fillShadowGradientFromOpacity: 1,
+              fillShadowGradientTo: '#66fcf1',
+              fillShadowGradientToOpacity: 0.35,
+              color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+              labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
+              strokeWidth: 3,
+              decimalPlaces: 1,
+              propsForDots: {
+                r: '5',
+                strokeWidth: '2',
+                stroke: '#66fcf1',
+                fill: '#66fcf1',
+              },
+            }}
             bezier
             withShadow={true}
             withDots={true}
@@ -353,6 +370,8 @@ export const MetricScreen: React.FC = () => {
                           backgroundColor: '#000f55',
                           padding: 12,
                           borderRadius: 8,
+                          borderWidth: 2,
+                          borderColor: '#001a88',
                           alignItems: 'center',
                           flexDirection: 'row',
                           justifyContent: 'center',
@@ -376,6 +395,8 @@ export const MetricScreen: React.FC = () => {
                           backgroundColor: '#000f55',
                           padding: 12,
                           borderRadius: 8,
+                          borderWidth: 2,
+                          borderColor: '#001a88',
                           alignItems: 'center',
                           flexDirection: 'row',
                           justifyContent: 'center',
