@@ -88,7 +88,8 @@ export const getMetricScreenChartConfig = (): any => {
   fillShadowGradientFromOpacity: 1,
     fillShadowGradientTo: '#66fcf1',
   fillShadowGradientToOpacity: 0.35,
-  useShadowColorFromDataset: true,
+  // Forçar uso do gradiente definido acima (evita depender do dataset)
+  useShadowColorFromDataset: false,
     // Cor da linha SEMPRE em cyan
     color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
@@ -121,11 +122,11 @@ export const getSensorDetailChartConfig = (fontSize: number): any => {
     // Forçar preenchimento em cyan
     fillShadowGradient: '#66fcf1',
     fillShadowGradientFrom: '#66fcf1',
-  fillShadowGradientFromOpacity: 1,
+    fillShadowGradientFromOpacity: 1,
     fillShadowGradientTo: '#66fcf1',
-  // Aumenta bastante a opacidade para o gradiente ficar visível
-  fillShadowGradientToOpacity: 0.6,
-  // Usar SEMPRE a cor do gradiente declarada acima (evita depender do dataset)
+  // Igual ao ChartPanel para consistência visual
+  fillShadowGradientToOpacity: 0.35,
+  // Forçar uso do gradiente declarado (não buscar cor do dataset)
   useShadowColorFromDataset: false,
     color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,

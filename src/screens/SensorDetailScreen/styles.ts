@@ -123,6 +123,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     justifyContent: 'flex-start',
     alignItems: 'center',
+    overflow: 'visible',
   },
   chartTitle: {
     fontSize: 18,
@@ -133,6 +134,7 @@ export const styles = StyleSheet.create({
   chart: {
     marginVertical: 8,
     borderRadius: 16,
+    overflow: 'visible',
   },
   historyContainer: {
     backgroundColor: COLORS.historyBackground,

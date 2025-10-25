@@ -7,6 +7,7 @@ import { useRoute } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
 import { Logo } from '../../components/Logo';
 import ChartPanel from '../../components/ChartPanel';
+import { getMetricScreenChartConfig } from '../../utils/chartConfig';
 import { useSensorStream } from '../../hooks/useSensorStream';
 import { readingsService, ReadingDTO } from '../../services/readings';
 import { historyService, SensorHistoryItem } from '../../services/history';
@@ -301,25 +302,7 @@ export const MetricScreen: React.FC = () => {
             }}
             width={Dimensions.get('window').width - 64}
             height={220}
-            chartConfig={{
-              backgroundColor: '#1C1C1E',
-              backgroundGradientFrom: '#1C1C1E',
-              backgroundGradientTo: '#1C1C1E',
-              fillShadowGradientFrom: '#66fcf1',
-              fillShadowGradientFromOpacity: 1,
-              fillShadowGradientTo: '#66fcf1',
-              fillShadowGradientToOpacity: 0.35,
-              color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
-              strokeWidth: 3,
-              decimalPlaces: 1,
-              propsForDots: {
-                r: '5',
-                strokeWidth: '2',
-                stroke: '#66fcf1',
-                fill: '#66fcf1',
-              },
-            }}
+            chartConfig={getMetricScreenChartConfig()}
             bezier
             withShadow={true}
             withDots={true}
@@ -329,9 +312,9 @@ export const MetricScreen: React.FC = () => {
             withHorizontalLines={true}
             segments={3}
             fromZero={false}
-            withVerticalLabels={true}
-            withHorizontalLabels={true}
-            style={{ borderRadius: 8, marginTop: 8 }}
+            withVerticalLabels={false}
+            withHorizontalLabels={false}
+            style={{ borderRadius: 8, marginTop: 8, overflow: 'visible' }}
           />
         ) : (
           <Text style={{ color: '#8E8E93', marginTop: 8 }}>Aguardando dados para o gráfico...</Text>
@@ -635,6 +618,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     padding: 16,
     borderRadius: 12,
+    overflow: 'visible',
   },
   label: {
     color: '#8E8E93',

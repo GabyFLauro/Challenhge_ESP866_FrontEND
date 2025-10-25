@@ -11,6 +11,7 @@ import { useSensorDetail } from '../../hooks/useSensorDetail';
 import { useSensorRealtime } from '../../contexts/SensorRealtimeContext';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import { classifyMetric } from '../../utils/alerts';
+import { getSensorDetailChartConfig } from '../../utils/chartConfig';
 
 // Função auxiliar para cores RGBA
 const rgba = (r: number, g: number, b: number, a: number) => `rgba(${r},${g},${b},${a})`;
@@ -285,26 +286,7 @@ export const SensorDetailScreen = () => {
               }}
               width={chartWidth}
               height={chartHeight}
-              chartConfig={{
-                backgroundColor: '#1C1C1E',
-                backgroundGradientFrom: '#1C1C1E',
-                backgroundGradientTo: '#1C1C1E',
-                fillShadowGradientFrom: '#66fcf1',
-                fillShadowGradientFromOpacity: 0.7,
-                fillShadowGradientTo: 'rgba(102, 252, 241, 0.1)',
-                fillShadowGradientToOpacity: 0.1,
-                color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
-                strokeWidth: 3,
-                decimalPlaces: 1,
-                propsForDots: {
-                  r: '5',
-                  strokeWidth: '2',
-                  stroke: '#66fcf1',
-                  fill: '#66fcf1',
-                },
-                propsForLabels: { fontSize: Math.max(10, chartFontSize - 2) },
-              }}
+              chartConfig={getSensorDetailChartConfig(chartFontSize)}
               bezier
               withShadow={true}
               withInnerLines={false}
@@ -313,9 +295,9 @@ export const SensorDetailScreen = () => {
               withHorizontalLines={true}
               withDots={true}
               segments={3}
-              fromZero={isTempOrVib ? true : false}
-              withVerticalLabels={true}
-              withHorizontalLabels={true}
+              fromZero={false}
+              withVerticalLabels={false}
+              withHorizontalLabels={false}
               style={styles.chart}
             />
           ) : hasEnoughDataForChart ? (
@@ -330,26 +312,7 @@ export const SensorDetailScreen = () => {
               }}
               width={chartWidth}
               height={chartHeight}
-              chartConfig={{
-                backgroundColor: '#1C1C1E',
-                backgroundGradientFrom: '#1C1C1E',
-                backgroundGradientTo: '#1C1C1E',
-                fillShadowGradientFrom: '#66fcf1',
-                fillShadowGradientFromOpacity: 0.7,
-                fillShadowGradientTo: 'rgba(102, 252, 241, 0.1)',
-                fillShadowGradientToOpacity: 0.1,
-                color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(142, 142, 147, ${opacity})`,
-                strokeWidth: 3,
-                decimalPlaces: 1,
-                propsForDots: {
-                  r: '5',
-                  strokeWidth: '2',
-                  stroke: '#66fcf1',
-                  fill: '#66fcf1',
-                },
-                propsForLabels: { fontSize: Math.max(10, chartFontSize - 2) },
-              }}
+              chartConfig={getSensorDetailChartConfig(chartFontSize)}
               bezier
               withShadow={true}
               withInnerLines={false}
@@ -358,9 +321,9 @@ export const SensorDetailScreen = () => {
               withHorizontalLines={true}
               withDots={true}
               segments={3}
-              fromZero={isTempOrVib ? true : false}
-              withVerticalLabels={true}
-              withHorizontalLabels={true}
+              fromZero={false}
+              withVerticalLabels={false}
+              withHorizontalLabels={false}
               style={styles.chart}
             />
           ) : (
