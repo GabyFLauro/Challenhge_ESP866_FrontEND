@@ -116,7 +116,12 @@ export function buildChartData(readings: ReadingDTO[], maxPoints: number = 8): {
     return `${date.getMinutes().toString().padStart(2, '0')}`;
   });
   const data = slice.map((r) => r.value);
-  return { labels, datasets: [{ data }] };
+  return { 
+    labels, 
+    datasets: [{ 
+      data
+    }] 
+  };
 }
 
 

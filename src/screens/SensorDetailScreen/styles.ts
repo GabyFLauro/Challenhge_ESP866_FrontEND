@@ -26,6 +26,8 @@ export const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    textAlign: 'center',
+    alignSelf: 'center',
     color: TEXT_COLORS.titleText,
   },
   sensorInfoContainer: {

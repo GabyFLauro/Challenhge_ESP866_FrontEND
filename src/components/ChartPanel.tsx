@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { getSharedLineChartConfig } from '../utils/chartConfig';
+import { getChartPanelConfig } from '../utils/chartConfig';
 
 type ChartPanelProps = {
   buffer: any[]; // array of messages
@@ -61,22 +61,23 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
           datasets: [
             {
               data: data.values,
-              // provide color per-dataset so the chart kit can use it for the shadow/fill
-              color: (opacity = 1) => `rgba(102, 253, 241, ${opacity})`,
-              strokeWidth: 2,
+              color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+              strokeWidth: 3,
             },
           ],
         }}
         width={screenWidth}
         height={height}
+        chartConfig={getChartPanelConfig()}
+  bezier
+  withShadow={true}
         withDots={true}
-        withShadow={true}
         withInnerLines={false}
         withOuterLines={false}
         withHorizontalLabels={false}
         withVerticalLabels={false}
-        chartConfig={getSharedLineChartConfig({ strokeWidth: 2 })}
-        bezier
+        segments={3}
+        fromZero={false}
         style={{ borderRadius: 8 }}
       />
     </View>

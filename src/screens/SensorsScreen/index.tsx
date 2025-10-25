@@ -56,8 +56,8 @@ export const SensorsScreen = () => {
             </View>
             
             <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, marginBottom: 8 }}>
-                    <Text>Status stream: {streamStatus}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 12, marginBottom: 8 }}>
+                    <Text style={{ marginRight: 12 }}>Status stream: {streamStatus}</Text>
                     <TouchableOpacity onPress={() => (paused ? resume() : pause())} style={{ padding: 8, backgroundColor: '#eee', borderRadius: 6 }}>
                         <Text>{paused ? 'Retomar' : 'Pausar'}</Text>
                     </TouchableOpacity>

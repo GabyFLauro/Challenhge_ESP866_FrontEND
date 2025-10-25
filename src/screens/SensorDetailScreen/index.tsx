@@ -4,7 +4,7 @@ import AlertRedIcon from '../../components/AlertRedIcon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Logo } from '../../components/Logo';
 import { LineChart } from 'react-native-chart-kit'; // Importação apenas do LineChart
-import { getSharedLineChartConfig } from '../../utils/chartConfig';
+import { getSensorDetailChartConfig } from '../../utils/chartConfig';
 import { Ionicons } from '@expo/vector-icons';
 import { styles } from './styles';
 import { readingsService } from '../../services/readings';
@@ -26,15 +26,6 @@ const getChartDimensions = (screenWidth: number) => {
   return { width, height, fontSize };
 };
 
-const getLineChartConfig = (fontSize: number) => ({
-  ...getSharedLineChartConfig({ strokeWidth: 3, decimalPlaces: 1 }),
-  style: { borderRadius: 1 },
-  propsForDots: { r: '4', strokeWidth: '2', stroke: '#66fdf1' },
-  propsForLabels: { fontSize: Math.max(10, fontSize - 2) },
-  propsForVerticalLabels: { fontSize: Math.max(8, fontSize - 4), rotation: 0 },
-  propsForHorizontalLabels: { fontSize: Math.max(8, fontSize - 4) },
-});
-
 export const SensorDetailScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -47,8 +38,45 @@ export const SensorDetailScreen = () => {
   // try get realtime buffer for this sensor
   const realtimeBuffer = realtime ? realtime.getBuffer(sensorId) : [];
   const realtimeLast = realtime ? realtime.getLast(sensorId) : null;
+  const isTempOrVib = ['t1','vx','vy','vz'].includes(sensorId);
+  const isPressure = ['p1','p2'].includes(sensorId);
   const [posting, setPosting] = React.useState<boolean>(false);
   const [historyCollapsed, setHistoryCollapsed] = React.useState<boolean>(true);
+
+  // Função para extrair valor correto do reading baseado no sensorId
+  const getValueFromReading = (reading: any, sensorId: string): number => {
+    // Primeiro tenta a propriedade 'value' (caso comum)
+    if (reading.value !== undefined && reading.value !== null) {
+      return Number(reading.value);
+    }
+    
+    // Mapear sensorId para a propriedade correta no objeto
+    const sensorKeyMap: Record<string, string[]> = {
+      'p1': ['pressao01_xgzp701db1r', 'pressao', 'value'],
+      'p2': ['pressao02_hx710b', 'pressao', 'value'],
+      't1': ['temperatura_ds18b20', 'temperatura', 'temp', 'value'],
+      'vx': ['vibracao_vib_x', 'vibracaoX', 'vibracao_x', 'vib_x', 'value'],
+      'vy': ['vibracao_vib_y', 'vibracaoY', 'vibracao_y', 'vib_y', 'value'],
+      'vz': ['vibracao_vib_z', 'vibracaoZ', 'vibracao_z', 'vib_z', 'value'],
+      'vel': ['velocidade_m_s', 'velocidade', 'value'],
+      'l1': ['chave_fim_de_curso', 'ativo', 'limit_switch', 'value'],
+    };
+
+    const possibleKeys = sensorKeyMap[sensorId] || ['value'];
+    
+    for (const key of possibleKeys) {
+      if (reading[key] !== undefined && reading[key] !== null) {
+        return Number(reading[key]);
+      }
+      // Tentar também em lowercase
+      const lowerKey = key.toLowerCase();
+      if (reading[lowerKey] !== undefined && reading[lowerKey] !== null) {
+        return Number(reading[lowerKey]);
+      }
+    }
+    
+    return 0;
+  };
 
   const handleUpdate = () => { load(); };
 
@@ -235,7 +263,7 @@ export const SensorDetailScreen = () => {
             color: '#0328d4', // azul
             textAlign: 'center',
           }}>
-            {realtimeLast ? (Number(realtimeLast.value ?? realtimeLast.pressao02_hx710b ?? realtimeLast.temperatura_ds18b20).toFixed(2)) : (readings[0].value.toFixed(2))}
+            {realtimeLast ? getValueFromReading(realtimeLast, sensorId).toFixed(2) : (readings[0]?.value?.toFixed(2) || '—')}
           </Text>
         </View>
       )}
@@ -248,37 +276,63 @@ export const SensorDetailScreen = () => {
           // se houver buffer realtime com pelo menos 2 pontos, desenha a partir dele
           (realtimeBuffer && realtimeBuffer.length >= 2) ? (
             <LineChart
-              data={{ labels: realtimeBuffer.map((_, i) => `${i+1}`), datasets: [{ data: realtimeBuffer.map(d => Number(d.value ?? d.pressao02_hx710b ?? d.temperatura_ds18b20 ?? d.vibracao_vib_x ?? d.vibracao_vib_y ?? d.vibracao_vib_z ?? 0)) }] }}
+              data={{ 
+                labels: realtimeBuffer.map((_, i) => `${i+1}`), 
+                datasets: [{ 
+                  data: realtimeBuffer.map(d => getValueFromReading(d, sensorId)),
+                  color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+                  strokeWidth: 3,
+                }] 
+              }}
               width={chartWidth}
               height={chartHeight}
-              chartConfig={getLineChartConfig(chartFontSize)}
+              chartConfig={{
+                ...getSensorDetailChartConfig(chartFontSize),
+                // Reforça o preenchimento para temperatura, vibração e pressão
+                ...((isTempOrVib || isPressure) ? { fillShadowGradientToOpacity: 0.8, fillShadowGradientFromOpacity: 1, useShadowColorFromDataset: false } : {}),
+              }}
               bezier
               withShadow={true}
-              style={styles.chart}
               withInnerLines={false}
               withOuterLines={false}
               withVerticalLines={false}
               withHorizontalLines={true}
               withDots={true}
               segments={3}
-              fromZero={false}
+              fromZero={isTempOrVib ? true : false}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              style={styles.chart}
             />
           ) : hasEnoughDataForChart ? (
             <LineChart
-              data={chartData}
+              data={{
+                ...chartData,
+                datasets: chartData.datasets.map((dataset: any) => ({
+                  ...dataset,
+                  color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+                  strokeWidth: 3,
+                }))
+              }}
               width={chartWidth}
               height={chartHeight}
-              chartConfig={getLineChartConfig(chartFontSize)}
+              chartConfig={{
+                ...getSensorDetailChartConfig(chartFontSize),
+                // Reforça o preenchimento para temperatura, vibração e pressão
+                ...((isTempOrVib || isPressure) ? { fillShadowGradientToOpacity: 0.8, fillShadowGradientFromOpacity: 1, useShadowColorFromDataset: false } : {}),
+              }}
               bezier
               withShadow={true}
-              style={styles.chart}
               withInnerLines={false}
               withOuterLines={false}
               withVerticalLines={false}
               withHorizontalLines={true}
               withDots={true}
               segments={3}
-              fromZero={false}
+              fromZero={isTempOrVib ? true : false}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              style={styles.chart}
             />
           ) : (
             <View style={styles.noDataContainer}>

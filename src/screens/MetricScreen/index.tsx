@@ -5,7 +5,7 @@ import AlertRedIcon from '../../components/AlertRedIcon';
 import { Text } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
 import { LineChart } from 'react-native-chart-kit';
-import { getSharedLineChartConfig } from '../../utils/chartConfig';
+import { getMetricScreenChartConfig } from '../../utils/chartConfig';
 import { Logo } from '../../components/Logo';
 import ChartPanel from '../../components/ChartPanel';
 import { useSensorStream } from '../../hooks/useSensorStream';
@@ -210,7 +210,12 @@ export const MetricScreen: React.FC = () => {
   const step = Math.ceil(rawLabels.length / 6) || 1; // mostra no máximo 6 labels
   const labels = rawLabels.map((label, idx) => (idx % step === 0 ? label : ''));
   const data = hist.map(getValue).filter(v => v !== null) as number[];
-  return { labels, datasets: [{ data }] };
+  return { 
+    labels, 
+    datasets: [{ 
+      data
+    }] 
+  };
   }, [history, keyName]);
 
   return (
@@ -287,22 +292,29 @@ export const MetricScreen: React.FC = () => {
           <ActivityIndicator color="#0328d4" style={{ marginVertical: 8 }} />
         ) : timeChart.datasets[0].data.length >= 2 ? (
           <LineChart
-            data={timeChart}
+            data={{
+              ...timeChart,
+              datasets: timeChart.datasets.map((dataset: any) => ({
+                ...dataset,
+                color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
+                strokeWidth: 3,
+              }))
+            }}
             width={Dimensions.get('window').width - 64}
             height={220}
-            chartConfig={getSharedLineChartConfig({ strokeWidth: 3, decimalPlaces: 1 })}
+            chartConfig={getMetricScreenChartConfig()}
             bezier
-            // Disable fill (shadow) for the temperature metric specifically so
-            // the temperature screen accessed via the sidebar is NOT filled.
-            withShadow={keyName !== 'temperatura_ds18b20'}
-            style={{ borderRadius: 8, marginTop: 8 }}
+            withShadow={true}
             withDots={true}
             withInnerLines={false}
             withOuterLines={false}
             withVerticalLines={false}
             withHorizontalLines={true}
             segments={3}
-            verticalLabelRotation={-30}
+            fromZero={false}
+            withVerticalLabels={true}
+            withHorizontalLabels={true}
+            style={{ borderRadius: 8, marginTop: 8 }}
           />
         ) : (
           <Text style={{ color: '#8E8E93', marginTop: 8 }}>Aguardando dados para o gráfico...</Text>
@@ -574,17 +586,20 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 16,
     paddingBottom: 8,
+    alignItems: 'center',
   },
   title: {
     color: '#FFFFFF',
     marginBottom: 4,
+    textAlign: 'center',
   },
   subtitle: {
     color: '#8E8E93',
+    textAlign: 'center',
   },
   actionButton: {
     marginTop: 8,
-    alignSelf: 'flex-start',
+    alignSelf: 'center',
     backgroundColor: '#2C2C2E',
     paddingHorizontal: 12,
     paddingVertical: 8,
