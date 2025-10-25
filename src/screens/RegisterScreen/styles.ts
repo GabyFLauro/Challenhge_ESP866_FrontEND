@@ -1,10 +1,11 @@
 
 import { StyleSheet } from 'react-native';
+import { SENSORS_LIST_COLORS, SENSORS_LIST_TEXT_COLORS, METRIC_SCREEN_COLORS } from '../../config/themeColors';
 
 export const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#000000',
+        backgroundColor: SENSORS_LIST_COLORS.appBackground,
     },
     formContainer: {
         flex: 1,
@@ -13,7 +14,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        color: '#FFFFFF',
+        color: SENSORS_LIST_TEXT_COLORS.titleText,
         textAlign: 'center',
         marginBottom: 30,
     },
@@ -22,7 +23,7 @@ export const styles = StyleSheet.create({
         width: '100%',
     },
     inputText: {
-        color: '#FFFFFF',
+        color: SENSORS_LIST_TEXT_COLORS.titleText,
     },
     button: {
         marginTop: 10,
@@ -33,7 +34,7 @@ export const styles = StyleSheet.create({
         width: '100%',
     },
     backButtonStyle: {
-        backgroundColor: '#2C2C2E',
+        backgroundColor: METRIC_SCREEN_COLORS.actionButtonBackground,
     },
     errorText: {
         color: '#FF3B30',
@@ -41,7 +42,7 @@ export const styles = StyleSheet.create({
         marginBottom: 10,
     },
     userTypeLabel: {
-        color: '#FFFFFF',
+        color: SENSORS_LIST_TEXT_COLORS.titleText,
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 10,

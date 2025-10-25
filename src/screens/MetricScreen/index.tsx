@@ -291,7 +291,7 @@ export const MetricScreen: React.FC = () => {
         {loadingHistory ? (
           <ActivityIndicator color="#0328d4" style={{ marginVertical: 8 }} />
         ) : timeChart.datasets[0].data.length >= 2 ? (
-          <LineChart
+            <LineChart
             data={{
               ...timeChart,
               datasets: timeChart.datasets.map((dataset: any) => ({
@@ -312,8 +312,8 @@ export const MetricScreen: React.FC = () => {
             withHorizontalLines={true}
             segments={3}
             fromZero={false}
-            withVerticalLabels={false}
-            withHorizontalLabels={false}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
             style={{ borderRadius: 8, marginTop: 8, overflow: 'visible' }}
           />
         ) : (

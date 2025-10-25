@@ -7,9 +7,10 @@ type ChartPanelProps = {
   keyName: string; // property name to extract numeric values
   maxPoints?: number;
   height?: number;
+  showAxisLabels?: boolean; // whether to show X/Y axis labels (defaults to true)
 };
 
-export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoints = 40, height = 160 }) => {
+export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoints = 40, height = 160, showAxisLabels = true }) => {
   const LABELS: Record<string, string> = {
     pressao02_hx710b: 'Pressão HX710B',
     temperatura_ds18b20: 'Temperatura DS18B20',
@@ -24,17 +25,33 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
     if (!buffer || buffer.length === 0) return { labels: [], values: [] };
 
     const vals: number[] = [];
+    const times: string[] = [];
     // iterate from oldest to newest
     for (let i = Math.max(0, buffer.length - maxPoints); i < buffer.length; i++) {
       const item = buffer[i];
       const v = item && (item[keyName] ?? item[keyName.toLowerCase()] );
       if (v !== undefined && v !== null && !isNaN(Number(v))) {
         vals.push(Number(v));
+        // try to extract a timestamp-like field and format it
+        const rawTs = item.timestamp ?? item.time ?? item.dataHora ?? item.data_hora ?? item.ultimoHorario ?? item.ultimo_horario;
+        let label = '';
+        try {
+          if (rawTs) {
+            const d = new Date(rawTs);
+            if (!isNaN(d.getTime())) {
+              label = d.toLocaleTimeString();
+            }
+          }
+        } catch (e) {
+          label = '';
+        }
+        times.push(label || `${vals.length}`);
       }
     }
 
-    const labels = vals.map((_, i) => `${i + 1}`);
-    return { labels, values: vals };
+    // if we have fewer labels than values (edge cases), fill with indices
+    while (times.length < vals.length) times.unshift('');
+    return { labels: times, values: vals };
   }, [buffer, keyName, maxPoints]);
 
   const cardStyle = { backgroundColor: '#1C1C1E', padding: 16, borderRadius: 12, marginBottom: 12 } as const;
@@ -55,16 +72,7 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
     <View style={cardStyle}>
       <Text style={labelTextStyle}>{LABELS[keyName] || keyName}</Text>
       <LineChart
-        data={{
-          labels: data.labels,
-          datasets: [
-            {
-              data: data.values,
-              color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
-              strokeWidth: 3,
-            },
-          ],
-        }}
+        data={{ labels: data.labels, datasets: [{ data: data.values, color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`, strokeWidth: 3 }] }}
         width={screenWidth}
         height={height}
         chartConfig={{
@@ -91,8 +99,9 @@ export const ChartPanel: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoin
         withDots={true}
         withInnerLines={false}
         withOuterLines={false}
-        withHorizontalLabels={false}
-        withVerticalLabels={false}
+        // controlar a exibição de labels via prop
+        withHorizontalLabels={!!showAxisLabels}
+        withVerticalLabels={!!showAxisLabels}
         segments={3}
         fromZero={false}
         style={{ borderRadius: 8 }}

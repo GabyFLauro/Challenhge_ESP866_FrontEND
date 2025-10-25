@@ -65,7 +65,7 @@ export const DashboardRealtime = () => {
             </AnimatedButton>
           </View>
 
-          <ChartPanel buffer={buffer} keyName={selected} maxPoints={60} />
+          <ChartPanel buffer={buffer} keyName={selected} maxPoints={60} showAxisLabels={false} />
         </View>
       </ScrollView>
     </View>

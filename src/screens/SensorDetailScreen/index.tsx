@@ -38,6 +38,21 @@ export const SensorDetailScreen = () => {
   // try get realtime buffer for this sensor
   const realtimeBuffer = realtime ? realtime.getBuffer(sensorId) : [];
   const realtimeLast = realtime ? realtime.getLast(sensorId) : null;
+  const realtimeLabels = React.useMemo(() => {
+    if (!realtimeBuffer || realtimeBuffer.length === 0) return [] as string[];
+    return realtimeBuffer.map((item, idx) => {
+      const rawTs = item.timestamp ?? item.dataHora ?? item.data_hora ?? item.time ?? item.ultimoHorario ?? item.ultimo_horario ?? item.createdAt;
+      try {
+        if (rawTs) {
+          const d = new Date(rawTs);
+          if (!isNaN(d.getTime())) return d.toLocaleTimeString();
+        }
+      } catch (e) {
+        // ignore
+      }
+      return `${idx + 1}`;
+    });
+  }, [realtimeBuffer]);
   const isTempOrVib = ['t1','vx','vy','vz'].includes(sensorId);
   const isPressure = ['p1','p2'].includes(sensorId);
   const [posting, setPosting] = React.useState<boolean>(false);
@@ -111,19 +126,6 @@ export const SensorDetailScreen = () => {
     }
   };
 
-  const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
-    switch (status) {
-      case 'ok':
-        return '#0328d4';
-      case 'warning':
-        return '#FFC107';
-      case 'error':
-        return '#FF3B30';
-      default:
-        return '#8E8E93';
-    }
-  };
-
   // Retorna emoji para ok/alerta; null para erro (usará o ícone SVG)
   const getStatusIcon = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
@@ -138,12 +140,24 @@ export const SensorDetailScreen = () => {
     }
   };
 
+  // Cor de status para exibição
+  const getStatusColor = (status: 'ok' | 'warning' | 'error') => {
+    switch (status) {
+      case 'ok':
+        return '#0328d4';
+      case 'warning':
+        return '#FFC107';
+      case 'error':
+        return '#FF3B30';
+      default:
+        return '#8E8E93';
+    }
+  };
+
   const getStatusText = (status: 'ok' | 'warning' | 'error') => {
     switch (status) {
       case 'ok':
-        return 'NORMAL';
-      case 'warning':
-        return 'ALERTA';
+    return 'NORMAL';
       case 'error':
         return 'FALHA';
       default:
@@ -277,7 +291,7 @@ export const SensorDetailScreen = () => {
           (realtimeBuffer && realtimeBuffer.length >= 2) ? (
             <LineChart
               data={{ 
-                labels: realtimeBuffer.map((_, i) => `${i+1}`), 
+                labels: realtimeLabels, 
                 datasets: [{ 
                   data: realtimeBuffer.map(d => getValueFromReading(d, sensorId)),
                   color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
@@ -296,8 +310,8 @@ export const SensorDetailScreen = () => {
               withDots={true}
               segments={3}
               fromZero={false}
-              withVerticalLabels={false}
-              withHorizontalLabels={false}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
               style={styles.chart}
             />
           ) : hasEnoughDataForChart ? (
@@ -322,8 +336,8 @@ export const SensorDetailScreen = () => {
               withDots={true}
               segments={3}
               fromZero={false}
-              withVerticalLabels={false}
-              withHorizontalLabels={false}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
               style={styles.chart}
             />
           ) : (
