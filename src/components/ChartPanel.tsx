@@ -3,6 +3,7 @@ import { View, Text, Dimensions, StyleSheet } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 import { getChartPanelConfig } from '../utils/chartConfig';
 import { LABELS as SENSOR_LABELS, parseReadingValue } from '../utils/sensors';
+import { decimateSmart } from '../utils/decimation';
 
 type ChartPanelProps = {
   buffer?: any[]; // array of messages (optional when staticData is provided)
@@ -17,6 +18,9 @@ type ChartPanelProps = {
   // optional chartConfig override (if not provided, getChartPanelConfig() is used)
   chartConfig?: any;
   showLabel?: boolean; // whether to display the small title/label above the chart
+  enableDecimation?: boolean; // whether to decimate large datasets (default: true)
+  decimationThreshold?: number; // decimate if points > threshold (default: 150)
+  decimationTarget?: number; // target number of points after decimation (default: 100)
 };
 
 // Move styles outside component to avoid recreation on every render
@@ -37,7 +41,21 @@ const styles = StyleSheet.create({
   },
 });
 
-const ChartPanelComponent: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPoints = 40, height = 160, showAxisLabels = true, disableGradient = false, chartWidth, staticData, chartConfig, showLabel = true }) => {
+const ChartPanelComponent: React.FC<ChartPanelProps> = ({ 
+  buffer, 
+  keyName, 
+  maxPoints = 40, 
+  height = 160, 
+  showAxisLabels = true, 
+  disableGradient = false, 
+  chartWidth, 
+  staticData, 
+  chartConfig, 
+  showLabel = true,
+  enableDecimation = true,
+  decimationThreshold = 150,
+  decimationTarget = 100
+}) => {
   const LABELS = SENSOR_LABELS;
 
   const data = useMemo(() => {
@@ -92,15 +110,28 @@ const ChartPanelComponent: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPo
     return { labels: times, values: vals };
   }, [buffer, keyName, maxPoints, staticData]);
 
+  // Apply decimation if enabled and data exceeds threshold
+  const decimatedData = useMemo(() => {
+    if (!enableDecimation || data.values.length <= decimationThreshold) {
+      return data;
+    }
+    
+    if (__DEV__) {
+      console.debug(`[ChartPanel][${keyName}] Decimating ${data.values.length} points → ${decimationTarget}`);
+    }
+    
+    return decimateSmart(data.values, data.labels, decimationTarget);
+  }, [data, enableDecimation, decimationThreshold, decimationTarget, keyName]);
+
   // diagnostics: compute simple stats to help debug missing gradient issues
   const stats = React.useMemo(() => {
-    const vals = data.values || [];
+    const vals = decimatedData.values || [];
     const n = vals.length;
     const min = n > 0 ? Math.min(...vals) : undefined;
     const max = n > 0 ? Math.max(...vals) : undefined;
     const equal = n > 0 ? min === max : false;
     return { n, min, max, equal, preview: vals.slice(0, 6) };
-  }, [data]);
+  }, [decimatedData]);
 
   // Emit diagnostic log so developer can see in Metro/console why gradient may be invisible
   // Only log in development mode to avoid production overhead
@@ -111,10 +142,14 @@ const ChartPanelComponent: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPo
       console.debug(`[ChartPanel][${keyName}] no data (${stats?.n || 0} points)`);
       return;
     }
-    console.debug(`[ChartPanel][${keyName}] points=${stats.n} min=${stats.min} max=${stats.max} equal=${stats.equal} disableGradient=${disableGradient} chartConfigProvided=${!!chartConfig}`, stats.preview);
-  }, [keyName, stats, disableGradient, chartConfig]);
+    const wasDecimated = data.values.length !== decimatedData.values.length;
+    console.debug(
+      `[ChartPanel][${keyName}] points=${stats.n}${wasDecimated ? ` (from ${data.values.length})` : ''} min=${stats.min} max=${stats.max} equal=${stats.equal}`,
+      stats.preview
+    );
+  }, [keyName, stats, disableGradient, chartConfig, data.values.length, decimatedData.values.length]);
 
-  if (!data.values || data.values.length === 0) {
+  if (!decimatedData.values || decimatedData.values.length === 0) {
     return (
       <View style={styles.cardStyle}>
         {showLabel && <Text style={styles.labelTextStyle}>{LABELS[keyName] || keyName}</Text>}
@@ -129,7 +164,7 @@ const ChartPanelComponent: React.FC<ChartPanelProps> = ({ buffer, keyName, maxPo
     <View style={styles.cardStyle}>
       {showLabel && <Text style={styles.labelTextStyle}>{LABELS[keyName] || keyName}</Text>}
       <LineChart
-        data={{ labels: data.labels, datasets: [{ data: data.values, color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`, strokeWidth: 3 }] }}
+        data={{ labels: decimatedData.labels, datasets: [{ data: decimatedData.values, color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`, strokeWidth: 3 }] }}
         width={screenWidth}
         height={height}
         chartConfig={chartConfig ?? getChartPanelConfig()}

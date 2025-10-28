@@ -1,21 +1,39 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { LoadingProvider, useLoading } from '../contexts/LoadingContext';
 import { RootStackParamList } from '../types/navigation';
 import { Ionicons } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import LoadingOverlay from '../components/LoadingOverlay';
 
-// Screens
+// Eager-loaded screens (login/register should load immediately)
 import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
-import { SensorsScreen } from '../screens/SensorsScreen';
-import { SensorDetailScreen } from '../screens/SensorDetailScreen';
-import DashboardRealtime from '../screens/DashboardRealtime';
-import MetricScreen from '../screens/MetricScreen';
+
+// Lazy-loaded heavy screens
+const SensorsScreen = lazy(() => import('../screens/SensorsScreen').then(m => ({ default: m.SensorsScreen })));
+const SensorDetailScreen = lazy(() => import('../screens/SensorDetailScreen').then(m => ({ default: m.SensorDetailScreen })));
+const DashboardRealtime = lazy(() => import('../screens/DashboardRealtime'));
+const MetricScreen = lazy(() => import('../screens/MetricScreen'));
+
+// Fallback loading component for lazy-loaded screens
+const ScreenLoadingFallback = () => (
+  <View style={screenLoadingStyles.container}>
+    <ActivityIndicator size="large" color="#0328d4" />
+  </View>
+);
+
+const screenLoadingStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0C0C0E',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Drawer = createDrawerNavigator();
@@ -51,17 +69,21 @@ const DrawerNavigator = () => {
     >
       <Drawer.Screen
         name="Realtime"
-        component={DashboardRealtime}
         options={{
           title: 'Realtime',
           drawerIcon: ({ color, size }) => (
             <Ionicons name="pulse-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <DashboardRealtime />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="Pressure"
-        component={MetricScreen}
         initialParams={{ keyName: 'pressao02_hx710b', title: 'Pressão HX710B', unit: 'Pa' }}
         options={{
           title: 'Pressão (HX710B)',
@@ -69,10 +91,15 @@ const DrawerNavigator = () => {
             <Ionicons name="speedometer-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="Temperature"
-        component={MetricScreen}
         initialParams={{ keyName: 'temperatura_ds18b20', title: 'Temperatura DS18B20', unit: '°C' }}
         options={{
           title: 'Temperatura',
@@ -80,10 +107,15 @@ const DrawerNavigator = () => {
             <Ionicons name="thermometer-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="VibrationX"
-        component={MetricScreen}
         initialParams={{ keyName: 'vibracao_vib_x', title: 'Vibração X', unit: 'g' }}
         options={{
           title: 'Vibração X',
@@ -91,10 +123,15 @@ const DrawerNavigator = () => {
             <Ionicons name="pulse-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="VibrationY"
-        component={MetricScreen}
         initialParams={{ keyName: 'vibracao_vib_y', title: 'Vibração Y', unit: 'g' }}
         options={{
           title: 'Vibração Y',
@@ -102,10 +139,15 @@ const DrawerNavigator = () => {
             <Ionicons name="pulse-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="VibrationZ"
-        component={MetricScreen}
         initialParams={{ keyName: 'vibracao_vib_z', title: 'Vibração Z', unit: 'g' }}
         options={{
           title: 'Vibração Z',
@@ -113,10 +155,15 @@ const DrawerNavigator = () => {
             <Ionicons name="pulse-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="Velocity"
-        component={MetricScreen}
         initialParams={{ keyName: 'velocidade_m_s', title: 'Velocidade', unit: 'm/s' }}
         options={{
           title: 'Velocidade',
@@ -124,10 +171,15 @@ const DrawerNavigator = () => {
             <Ionicons name="navigate-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
       <Drawer.Screen
         name="LimitSwitch"
-        component={MetricScreen}
         initialParams={{ keyName: 'chave_fim_de_curso', title: 'Chave Fim de Curso' }}
         options={{
           title: 'Chave Fim de Curso',
@@ -135,7 +187,13 @@ const DrawerNavigator = () => {
             <Ionicons name="toggle-outline" size={size} color={color} />
           ),
         }}
-      />
+      >
+        {() => (
+          <Suspense fallback={<ScreenLoadingFallback />}>
+            <MetricScreen />
+          </Suspense>
+        )}
+      </Drawer.Screen>
 
       <Drawer.Screen
         name="Logout"
@@ -196,7 +254,6 @@ export const AppNavigator: React.FC = () => {
                         />
                         <Stack.Screen
                             name="SensorDetail"
-                            component={SensorDetailScreen}
                             options={{ 
                                 title: 'Detalhes do Sensor',
                                 headerShown: true,
@@ -205,19 +262,30 @@ export const AppNavigator: React.FC = () => {
                                 },
                                 headerTintColor: '#FFFFFF',
                             }}
-                        />
-            <Stack.Screen
-              name="Metric"
-              component={MetricScreen}
-              options={{ 
-                title: 'Métrica',
-                headerShown: true,
-                headerStyle: {
-                  backgroundColor: '#1C1C1E',
-                },
-                headerTintColor: '#FFFFFF',
-              }}
-            />
+                        >
+                            {() => (
+                                <Suspense fallback={<ScreenLoadingFallback />}>
+                                    <SensorDetailScreen />
+                                </Suspense>
+                            )}
+                        </Stack.Screen>
+                        <Stack.Screen
+                            name="Metric"
+                            options={{ 
+                                title: 'Métrica',
+                                headerShown: true,
+                                headerStyle: {
+                                    backgroundColor: '#1C1C1E',
+                                },
+                                headerTintColor: '#FFFFFF',
+                            }}
+                        >
+                            {() => (
+                                <Suspense fallback={<ScreenLoadingFallback />}>
+                                    <MetricScreen />
+                                </Suspense>
+                            )}
+                        </Stack.Screen>
                     </>
                 )}
             </Stack.Navigator>
