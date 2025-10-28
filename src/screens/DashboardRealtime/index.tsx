@@ -1,19 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Text } from 'react-native-elements';
 import { useSensorStream } from '../../hooks/useSensorStream';
 import ChartPanel from '../../components/ChartPanel';
+import { AVAILABLE_UI_KEYS } from '../../utils/sensors';
 import AnimatedButton from '../../components/AnimatedButton';
 // import { useLoading } from '../../contexts/LoadingContext';
 
-const AVAILABLE_KEYS = [
-  'temperatura_ds18b20',
-  'pressao02_hx710b',
-  'vibracao_vib_x',
-  'vibracao_vib_y',
-  'vibracao_vib_z',
-  'velocidade_m_s',
-];
+const AVAILABLE_KEYS = AVAILABLE_UI_KEYS;
 
 export const DashboardRealtime = () => {
   const { buffer, lastReading, status, paused, pause, resume, metrics } = useSensorStream();
@@ -21,7 +15,13 @@ export const DashboardRealtime = () => {
   // const { showLoading, hideLoading } = useLoading();
   const [isFirstLoad, setIsFirstLoad] = useState(true);
 
-  const lastValue = lastReading ? (lastReading[selected] ?? lastReading[selected.toLowerCase()]) : undefined;
+  // Some backends use 'pressao02_hx710b' while UI shows 'pressao_hx710b' as a friendly key.
+  // Resolve the actual data key we should read from incoming messages so values like 0 are picked up.
+  const dataKey = selected === 'pressao_hx710b' ? 'pressao02_hx710b' : selected;
+  const lastValue = lastReading ? (lastReading[dataKey] ?? lastReading[dataKey.toLowerCase()] ?? lastReading[selected] ?? lastReading[selected.toLowerCase()]) : undefined;
+
+  const windowWidth = Dimensions.get('window').width;
+  const chartWidth = windowWidth - 16; // use more width so chart fills more of the screen
 
   // Show loading on first load and hide when data is ready
   // React.useEffect(() => {
@@ -65,7 +65,7 @@ export const DashboardRealtime = () => {
             </AnimatedButton>
           </View>
 
-          <ChartPanel buffer={buffer} keyName={selected} maxPoints={60} showAxisLabels={false} />
+          <ChartPanel buffer={buffer} keyName={dataKey} maxPoints={60} showAxisLabels={false} height={340} chartWidth={chartWidth} />
         </View>
       </ScrollView>
     </View>
@@ -101,21 +101,26 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    margin: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    margin: 6,
     backgroundColor: '#2C2C2E',
-    borderRadius: 8,
+    borderRadius: 12,
+    minWidth: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chipSelected: {
     backgroundColor: '#0328d4',
   },
   chipText: {
     color: '#FFFFFF',
+    fontSize: 16,
+    textAlign: 'center',
   },
   chipTextSelected: {
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
   },
   content: {
     paddingHorizontal: 12,
@@ -126,22 +131,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     borderRadius: 12,
     marginBottom: 12,
+    alignItems: 'center',
   },
   cardLabel: {
     color: '#8E8E93',
     marginBottom: 6,
+    textAlign: 'center',
+    fontSize: 14,
   },
   cardValue: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   actionButton: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
+    marginTop: 10,
+    alignSelf: 'center',
     backgroundColor: '#2C2C2E',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   actionButtonText: {
     color: '#FFFFFF',
