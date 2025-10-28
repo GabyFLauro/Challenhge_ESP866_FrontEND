@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { Text } from 'react-native-elements';
+import { parseReadingValue, extractReadingTimestamp } from '../../utils/sensors';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/navigation';
@@ -93,11 +94,12 @@ export const SensorsScreen = () => {
                                 {(() => {
                                     const last = realtime.getLast(String(sensor.id));
                                     if (last) {
-                                        const v = last.value ?? last.pressao02_hx710b ?? last.temperatura_ds18b20;
-                                        const ts = last.data_hora ?? last.timestamp ?? last.dataHora ?? new Date().toISOString();
+                                        const parsed = parseReadingValue(last, String(sensor.id));
+                                        const v = parsed !== null && parsed !== undefined ? parsed : (last.value ?? last.pressao02_hx710b ?? last.temperatura_ds18b20);
+                                        const ts = extractReadingTimestamp(last) ?? new Date().toISOString();
                                         return (
                                             <>
-                                                <Text style={styles.currentValue}>Valor atual: {Number(v).toFixed(2)} {sensor.unit || ''}</Text>
+                                                <Text style={styles.currentValue}>Valor atual: {typeof v === 'number' ? Number(v).toFixed(2) : String(v)} {sensor.unit || ''}</Text>
                                                 <Text style={styles.lastUpdate}>Última atualização: {new Date(ts).toLocaleString()}</Text>
                                             </>
                                         );

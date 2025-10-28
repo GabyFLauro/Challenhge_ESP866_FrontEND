@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient';
+import logger from '../utils/logger';
 
 export interface SensorDTO {
   id: string;
@@ -19,39 +20,31 @@ export interface SensorDTO {
 }
 
 export const sensorsService = {
-  async list(): Promise<SensorDTO[]> {
+  async getAll(): Promise<SensorDTO[]> {
     try {
-      console.log('🔍 Buscando sensores do backend real...');
-  const raw = await apiClient.publicGet<any[]>('/sensors');
-      const sensors: SensorDTO[] = (raw || []).map(normalizeSensor);
-      console.log('✅ Sensores carregados do backend:', sensors.length);
-      
-      // Log detalhado para debug
-      console.log('📊 Estrutura dos dados do backend:');
-      sensors.forEach((sensor, index) => {
-        console.log(`Sensor ${index + 1}:`, {
+      logger.debug('🔍 Buscando sensores do backend real...');
+      const sensors = await apiClient.get<SensorDTO[]>('/sensors');
+      logger.debug('✅ Sensores carregados do backend:', sensors.length);
+
+      // Log estrutura para debug
+      logger.debug('📊 Estrutura dos dados do backend:');
+      sensors.slice(0, 2).forEach((sensor: SensorDTO, index: number) => {
+        logger.debug(`Sensor ${index + 1}:`, {
           id: sensor.id,
           name: sensor.name,
-          model: sensor.model,
           type: sensor.type,
+          model: sensor.model,
           location: sensor.location,
-          description: sensor.description,
-          unit: sensor.unit,
-          isActive: sensor.isActive,
-          minValue: sensor.minValue,
-          maxValue: sensor.maxValue,
           currentValue: sensor.currentValue,
-          lastReading: sensor.lastReading
+          unit: sensor.unit,
+          hasLastReading: !!sensor.lastReading,
         });
       });
-      
+
       return sensors;
     } catch (error) {
-      console.log('⚠️ Erro ao buscar sensores do backend, usando dados de fallback:', error);
-      console.log('📋 Usando dados de fallback com estrutura:', {
-        campos: ['id', 'name', 'model', 'type', 'location', 'description', 'unit', 'isActive', 'minValue', 'maxValue', 'currentValue']
-      });
-      
+      logger.warn('⚠️ Erro ao buscar sensores do backend, usando dados de fallback:', error);
+      logger.debug('📋 Usando dados de fallback');
       // Fallback com dados coerentes e mais completos
       return [
         { 
@@ -150,13 +143,13 @@ export const sensorsService = {
 
   async getById(id: string): Promise<SensorDTO | null> {
     try {
-      console.log(`🔍 Buscando sensor ${id} do backend real...`);
+      logger.debug(`🔍 Buscando sensor ${id} do backend real...`);
   const raw = await apiClient.publicGet<any>(`/sensors/${encodeURIComponent(id)}`);
       const sensor = normalizeSensor(raw);
-      console.log('✅ Sensor carregado do backend:', sensor);
+      logger.debug('✅ Sensor carregado do backend:', sensor);
       
       // Log detalhado para debug
-      console.log('📊 Estrutura do sensor específico:', {
+      logger.debug('📊 Estrutura do sensor específico:', {
         id: sensor.id,
         name: sensor.name,
         model: sensor.model,
@@ -173,10 +166,10 @@ export const sensorsService = {
       
       return sensor;
     } catch (error) {
-      console.log(`⚠️ Erro ao buscar sensor ${id} do backend, usando fallback:`, error);
+      logger.warn(`⚠️ Erro ao buscar sensor ${id} do backend, usando fallback:`, error);
       // Fallback: busca na lista local
-      const sensors = await this.list();
-      return sensors.find(s => s.id === id) || null;
+      const sensors = await this.getAll();
+      return sensors.find((s: SensorDTO) => s.id === id) || null;
     }
   },
 };

@@ -3,7 +3,7 @@ import { View, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'reac
 import { Text } from 'react-native-elements';
 import { useSensorStream } from '../../hooks/useSensorStream';
 import ChartPanel from '../../components/ChartPanel';
-import { AVAILABLE_UI_KEYS } from '../../utils/sensors';
+import { AVAILABLE_UI_KEYS, parseReadingValue, KEY_TO_SENSOR_ID } from '../../utils/sensors';
 import AnimatedButton from '../../components/AnimatedButton';
 // import { useLoading } from '../../contexts/LoadingContext';
 
@@ -18,7 +18,15 @@ export const DashboardRealtime = () => {
   // Some backends use 'pressao02_hx710b' while UI shows 'pressao_hx710b' as a friendly key.
   // Resolve the actual data key we should read from incoming messages so values like 0 are picked up.
   const dataKey = selected === 'pressao_hx710b' ? 'pressao02_hx710b' : selected;
-  const lastValue = lastReading ? (lastReading[dataKey] ?? lastReading[dataKey.toLowerCase()] ?? lastReading[selected] ?? lastReading[selected.toLowerCase()]) : undefined;
+  const lastValue = (() => {
+    if (!lastReading) return undefined;
+    // Prefer centralized parser using sensorId lookup when available
+    const sensorId = KEY_TO_SENSOR_ID[dataKey] ?? KEY_TO_SENSOR_ID[selected] ?? dataKey;
+    const parsed = parseReadingValue(lastReading, String(sensorId));
+    if (parsed !== null && parsed !== undefined && !isNaN(Number(parsed))) return Number(parsed);
+    // fallback to direct field access
+    return lastReading[dataKey] ?? lastReading[dataKey.toLowerCase()] ?? lastReading[selected] ?? lastReading[selected.toLowerCase()];
+  })();
 
   const windowWidth = Dimensions.get('window').width;
   const chartWidth = windowWidth - 16; // use more width so chart fills more of the screen

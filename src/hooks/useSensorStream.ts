@@ -41,6 +41,8 @@ function initializeGlobalConnection() {
       try {
         callback(msg);
       } catch (e) {
+        // avoid breaking other subscribers
+        // eslint-disable-next-line no-console
         console.error('Erro ao notificar subscriber:', e);
       }
     });
@@ -53,6 +55,7 @@ function initializeGlobalConnection() {
       try {
         callback(s);
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error('Erro ao notificar status subscriber:', e);
       }
     });
@@ -118,6 +121,8 @@ export function useSensorStream(bufferSize = 200) {
   const [lastReading, setLastReading] = useState<SensorMessage | null>(null);
   const [status, setStatus] = useState<string>('disconnected');
   const [paused, setPaused] = useState<boolean>(false);
+  // reactive buffer used by UI components so they re-render on initial load and throttle updates
+  const [bufferState, setBufferState] = useState<SensorMessage[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
   const localBufferRef = useRef<SensorMessage[]>([]);
   const throttledRef = useRef<number | null>(null);
@@ -139,6 +144,8 @@ export function useSensorStream(bufferSize = 200) {
         throttledRef.current = window.setTimeout(() => {
           const last = localBufferRef.current[localBufferRef.current.length - 1] || null;
           setLastReading(last);
+          // also update reactive buffer so charts and lists refresh
+          setBufferState([...localBufferRef.current]);
           throttledRef.current && clearTimeout(throttledRef.current as number);
           throttledRef.current = null;
         }, 300);
@@ -157,7 +164,9 @@ export function useSensorStream(bufferSize = 200) {
     connection.statusSubscribers.add(onStatusChange);
 
     // Preencher buffer local com dados já existentes
-    localBufferRef.current = [...connection.buffer.slice(-bufferSize)];
+  localBufferRef.current = [...connection.buffer.slice(-bufferSize)];
+  // set reactive buffer so UI shows existing data immediately on mount
+  setBufferState([...localBufferRef.current]);
 
     const metricsInterval = setInterval(async () => {
       try {
@@ -192,6 +201,6 @@ export function useSensorStream(bufferSize = 200) {
     resume,
     paused,
     metrics,
-    buffer: localBufferRef.current,
+    buffer: bufferState,
   };
 }

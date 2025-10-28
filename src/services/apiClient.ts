@@ -1,6 +1,7 @@
 import { API_CONFIG } from '../config/api';
 import { Platform } from 'react-native';
 import { getApiBaseUrl } from './runtimeConfig';
+import logger from '../utils/logger';
 
 /**
  * Cliente HTTP para comunicação com a API
@@ -204,30 +205,32 @@ class ApiClient {
   /**
    * Testa a conectividade com o backend
    */
-  async testConnection(): Promise<{ success: boolean; message: string; url: string }> {
-    const url = `${this.baseURL}/health`;
+  async testConnection(url?: string): Promise<{ ok: boolean; message: string }> {
+    const testUrl = url || this.baseURL;
     try {
-      console.log(`🔍 Testando conectividade com backend: ${url}`);
-      const response = await fetch(url, {
+      logger.debug(`🔍 Testando conectividade com backend: ${testUrl}`);
+      
+      // Primeiro tenta uma chamada simples para verificar se o servidor está acessível
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
+      const response = await fetch(testUrl, { 
         method: 'GET',
-        headers: this.getHeaders(),
-        signal: AbortSignal.timeout(5000), // Timeout de 5 segundos para teste
+        signal: controller.signal as any
       });
       
+      clearTimeout(timeoutId);
+      
       if (response.ok) {
-        console.log('✅ Backend está acessível');
-        return { success: true, message: 'Backend acessível', url };
+        logger.debug('✅ Backend está acessível');
+        return { ok: true, message: 'Backend conectado com sucesso' };
       } else {
-        console.log(`⚠️ Backend respondeu com status: ${response.status}`);
-        return { success: false, message: `Backend respondeu com status ${response.status}`, url };
+        logger.debug(`⚠️ Backend respondeu com status: ${response.status}`);
+        return { ok: false, message: `Backend respondeu com status ${response.status}` };
       }
     } catch (error) {
-      console.log('❌ Erro ao conectar com backend:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Erro desconhecido', 
-        url 
-      };
+      logger.debug('❌ Erro ao conectar com backend:', error);
+      return { ok: false, message: error instanceof Error ? error.message : 'Erro desconhecido' };
     }
   }
 }

@@ -4,7 +4,7 @@ import { View, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Dime
 import AlertRedIcon from '../../components/AlertRedIcon';
 import { Text } from 'react-native-elements';
 import { useRoute } from '@react-navigation/native';
-import { LineChart } from 'react-native-chart-kit';
+// LineChart not used directly anymore; ChartPanel is used instead.
 import { Logo } from '../../components/Logo';
 import ChartPanel from '../../components/ChartPanel';
 import { getMetricScreenChartConfig } from '../../utils/chartConfig';
@@ -25,26 +25,16 @@ type RouteParams = {
   unit?: string;   // ex: 'Pa' | '°C' | 'm/s' | 'g'
 };
 
-const LABELS: Record<string, { title: string; unit?: string }> = {
-  pressao02_hx710b: { title: 'Pressão HX710B', unit: 'Pa' },
-  temperatura_ds18b20: { title: 'Temperatura DS18B20', unit: '°C' },
-  vibracao_vib_x: { title: 'Vibração X', unit: 'g' },
-  vibracao_vib_y: { title: 'Vibração Y', unit: 'g' },
-  vibracao_vib_z: { title: 'Vibração Z', unit: 'g' },
-  velocidade_m_s: { title: 'Velocidade', unit: 'm/s' },
-  chave_fim_de_curso: { title: 'Chave Fim de Curso' },
-};
+import { LABELS as SENSOR_LABELS, KEY_TO_SENSOR_ID as SENSOR_KEY_TO_ID, parseReadingValue, extractReadingTimestamp } from '../../utils/sensors';
+
+const LABELS: Record<string, { title: string; unit?: string }> = Object.keys(SENSOR_LABELS).reduce((acc, k) => {
+  // convert to the shape expected: title/unit
+  acc[k] = { title: SENSOR_LABELS[k] } as any;
+  return acc;
+}, {} as Record<string, { title: string; unit?: string }>);
 
 // Mapeia a métrica (keyName) para o sensorId usado pelos endpoints de histórico
-const KEY_TO_SENSOR_ID: Record<string, string> = {
-  pressao02_hx710b: 'p2',
-  temperatura_ds18b20: 't1',
-  vibracao_vib_x: 'vx',
-  vibracao_vib_y: 'vy',
-  vibracao_vib_z: 'vz',
-  velocidade_m_s: 'vel', // fallback: readingsService gera valores default
-  chave_fim_de_curso: 'l1',
-};
+const KEY_TO_SENSOR_ID = SENSOR_KEY_TO_ID;
 
 export const MetricScreen: React.FC = () => {
   const route = useRoute();
@@ -80,13 +70,16 @@ export const MetricScreen: React.FC = () => {
   const last = lastReading || null;
   const lastValue = useMemo(() => {
     if (!last) return undefined;
+    const sensorId = SENSOR_KEY_TO_ID[keyName] ?? keyName;
+    const parsed = parseReadingValue(last, String(sensorId));
+    if (parsed !== null && parsed !== undefined && !isNaN(Number(parsed))) return Number(parsed);
     const v = last[keyName] ?? last[keyName?.toLowerCase?.() ?? ''];
     return v !== undefined ? Number(v) : undefined;
   }, [last, keyName]);
 
   const lastTs = useMemo(() => {
-    const ts = last?.data_hora || last?.timestamp || last?.dataHora || last?.createdAt;
-    return ts ? new Date(ts).toLocaleString() : '—';
+    const iso = extractReadingTimestamp(last);
+    return iso ? new Date(iso).toLocaleString() : '—';
   }, [last]);
 
   const isBoolean = keyName === 'chave_fim_de_curso';
@@ -97,15 +90,28 @@ export const MetricScreen: React.FC = () => {
     return b ? 'ATIVADA' : 'DESATIVADA';
   }, [isBoolean, last, keyName]);
 
+  // Memoized callbacks
+  const handlePauseResume = React.useCallback(() => {
+    paused ? resume() : pause();
+  }, [paused, pause, resume]);
+
+  const handlePeriodChange = React.useCallback((p: typeof period) => {
+    setPeriod(p);
+  }, []);
+
+  const toggleHistoryCollapsed = React.useCallback(() => {
+    setHistoryCollapsed(prev => !prev);
+  }, []);
+
   // Flag to track initial load
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // Atualizar histórico automaticamente quando uma nova leitura chega
   useEffect(() => {
-    if (!lastReading || lastValue === undefined) return;
-    
-    // Criar novo item de histórico a partir da leitura atual
-    const dataHora = lastReading.data_hora || lastReading.timestamp || lastReading.dataHora || lastReading.createdAt || new Date().toISOString();
+  if (!lastReading || lastValue === undefined) return;
+
+  // Criar novo item de histórico a partir da leitura atual
+  const dataHora = extractReadingTimestamp(lastReading) || new Date().toISOString();
     
     // Mapear o valor para o campo correto baseado no keyName
     const newHistoryItem: SensorHistoryItem = {
@@ -191,7 +197,7 @@ export const MetricScreen: React.FC = () => {
     return () => { mounted = false; };
   }, [keyName, period, customStart, customEnd, isInitialLoad]);
 
-  // Preparar dados para gráfico por tempo (histórico + realtime)
+  // Preparar dados para gráfico por tempo (histórico + realtime) - memoized labels
   const timeChart = useMemo(() => {
     // base: histórico ordenado asc por dataHora
     const hist = [...history].sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
@@ -205,17 +211,23 @@ export const MetricScreen: React.FC = () => {
       if (keyName === 'chave_fim_de_curso' && typeof r.ativo === 'boolean') return r.ativo ? 1 : 0;
       return null;
     };
-  // Reduzir quantidade de labels para evitar sobreposição
-  const rawLabels = hist.map((r) => new Date(r.dataHora).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-  const step = Math.ceil(rawLabels.length / 6) || 1; // mostra no máximo 6 labels
-  const labels = rawLabels.map((label, idx) => (idx % step === 0 ? label : ''));
-  const data = hist.map(getValue).filter(v => v !== null) as number[];
-  return { 
-    labels, 
-    datasets: [{ 
-      data
-    }] 
-  };
+    
+    // Pre-compute all labels once (avoid repeated Date parsing in render)
+    const rawLabels = hist.map((r) => {
+      const date = new Date(r.dataHora);
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    });
+    
+    // Reduzir quantidade de labels para evitar sobreposição
+    const step = Math.ceil(rawLabels.length / 6) || 1; // mostra no máximo 6 labels
+    const labels = rawLabels.map((label, idx) => (idx % step === 0 ? label : ''));
+    const data = hist.map(getValue).filter(v => v !== null) as number[];
+    return { 
+      labels, 
+      datasets: [{ 
+        data
+      }] 
+    };
   }, [history, keyName]);
 
   return (
@@ -225,7 +237,7 @@ export const MetricScreen: React.FC = () => {
       <View style={styles.header}>
         <Text h4 style={styles.title}>{meta.title}</Text>
         <Text style={styles.subtitle}>Status stream: {status} {paused ? '(Pausado)' : ''}</Text>
-        <AnimatedButton onPress={() => (paused ? resume() : pause())} style={styles.actionButton}>
+        <AnimatedButton onPress={handlePauseResume} style={styles.actionButton}>
           <Text style={styles.actionButtonText}>{paused ? 'Retomar' : 'Pausar'}</Text>
         </AnimatedButton>
       </View>
@@ -283,7 +295,11 @@ export const MetricScreen: React.FC = () => {
         {/* Filtros de período */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
           {['1h','24h'].map(p => (
-            <TouchableOpacity key={p} onPress={() => setPeriod(p as any)} style={[styles.actionButton, period === p && { backgroundColor: '#0328d4' }]}>
+            <TouchableOpacity 
+              key={p} 
+              onPress={() => handlePeriodChange(p as any)} 
+              style={[styles.actionButton, period === p && { backgroundColor: '#0328d4' }]}
+            >
               <Text style={[styles.actionButtonText, period === p && { color: '#fff' }]}>{p}</Text>
             </TouchableOpacity>
           ))}
@@ -291,30 +307,16 @@ export const MetricScreen: React.FC = () => {
         {loadingHistory ? (
           <ActivityIndicator color="#0328d4" style={{ marginVertical: 8 }} />
         ) : timeChart.datasets[0].data.length >= 2 ? (
-            <LineChart
-            data={{
-              ...timeChart,
-              datasets: timeChart.datasets.map((dataset: any) => ({
-                ...dataset,
-                color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
-                strokeWidth: 3,
-              }))
-            }}
-            width={Dimensions.get('window').width - 64}
+          <ChartPanel
+            // build static data from timeChart (labels + values)
+            staticData={{ labels: timeChart.labels, values: timeChart.datasets[0].data }}
+            keyName={keyName}
+            showLabel={false}
+            maxPoints={timeChart.datasets[0].data.length}
             height={220}
+            chartWidth={Dimensions.get('window').width - 64}
+            showAxisLabels={true}
             chartConfig={getMetricScreenChartConfig()}
-            bezier
-            withShadow={true}
-            withDots={true}
-            withInnerLines={false}
-            withOuterLines={false}
-            withVerticalLines={false}
-            withHorizontalLines={true}
-            segments={3}
-            fromZero={false}
-              withVerticalLabels={true}
-              withHorizontalLabels={true}
-            style={{ borderRadius: 8, marginTop: 8, overflow: 'visible' }}
           />
         ) : (
           <Text style={{ color: '#8E8E93', marginTop: 8 }}>Aguardando dados para o gráfico...</Text>
@@ -405,7 +407,7 @@ export const MetricScreen: React.FC = () => {
       {/* Histórico e gráfico por tempo */}
       <View style={styles.card}>
         <TouchableOpacity 
-          onPress={() => setHistoryCollapsed(prev => !prev)}
+          onPress={toggleHistoryCollapsed}
           style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}
         >
           <Text style={[styles.label, { fontSize: 16 }]}>Histórico (últimas leituras)</Text>

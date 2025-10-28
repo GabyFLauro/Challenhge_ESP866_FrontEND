@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useSensorStream } from '../hooks/useSensorStream';
+import { normalizeIncomingReading } from '../utils/sensors';
+import logger from '../utils/logger';
 
 type Reading = Record<string, any> & { id?: string; data_hora?: string };
 
@@ -19,33 +21,65 @@ export function SensorRealtimeProvider({ children }: { children: React.ReactNode
   const [tick, setTick] = useState(0); // to trigger re-renders
   const pausedRef = useRef(false);
   
+  // Throttle: batch incoming readings and flush every 500ms to reduce UI updates
+  const pendingUpdatesRef = useRef<Reading[]>([]);
+  const flushScheduledRef = useRef(false);
+  
   // Usar o stream global - isso mantém uma única conexão para toda a app
   const { buffer } = useSensorStream(500);
 
+  // Flush batched updates every 500ms (throttle mechanism)
   useEffect(() => {
-    // Processar dados do buffer global
-    if (buffer && buffer.length > 0) {
-      const lastReading = buffer[buffer.length - 1];
-      if (!pausedRef.current && lastReading) {
-        // Determine sensor id — try common fields
-        const sensorId = lastReading.sensorId ?? lastReading.idSensor ?? lastReading.sensor_id ?? String(lastReading.id ?? 'default');
+    const flushInterval = setInterval(() => {
+      if (pendingUpdatesRef.current.length > 0 && !pausedRef.current) {
+        const updates = pendingUpdatesRef.current;
+        pendingUpdatesRef.current = [];
+        flushScheduledRef.current = false;
 
-        if (!buffersRef.current[sensorId]) buffersRef.current[sensorId] = [];
-        
-        // Evitar duplicatas (verificar se já existe)
-        const lastInBuffer = buffersRef.current[sensorId][buffersRef.current[sensorId].length - 1];
-        const isSameReading = lastInBuffer && 
-          lastInBuffer.data_hora === lastReading.data_hora &&
-          JSON.stringify(lastInBuffer) === JSON.stringify(lastReading);
-        
-        if (!isSameReading) {
-          buffersRef.current[sensorId].push(lastReading);
-          // keep last N
-          const MAX = 200;
-          if (buffersRef.current[sensorId].length > MAX) {
-            buffersRef.current[sensorId].splice(0, buffersRef.current[sensorId].length - MAX);
+        // Process all batched readings
+        updates.forEach(incoming => {
+          const sensorId = incoming.sensorId ?? 'unknown';
+          if (!buffersRef.current[sensorId]) buffersRef.current[sensorId] = [];
+
+          // Evitar duplicatas usando id ou timestamp
+          const lastInBuffer = buffersRef.current[sensorId][buffersRef.current[sensorId].length - 1];
+          const isSameReading = lastInBuffer && (
+            (lastInBuffer.id && incoming.id && lastInBuffer.id === incoming.id) ||
+            (lastInBuffer.timestamp && incoming.timestamp && lastInBuffer.timestamp === incoming.timestamp)
+          );
+
+          if (!isSameReading) {
+            buffersRef.current[sensorId].push(incoming);
+            // keep last N
+            const MAX = 200;
+            if (buffersRef.current[sensorId].length > MAX) {
+              buffersRef.current[sensorId].splice(0, buffersRef.current[sensorId].length - MAX);
+            }
           }
-          setTick(t => t + 1);
+        });
+
+        // Single UI update for all batched readings
+        setTick(t => t + 1);
+      }
+    }, 500); // Flush every 500ms
+
+    return () => clearInterval(flushInterval);
+  }, []);
+
+  useEffect(() => {
+    // Processar dados do buffer global - batch them instead of immediate setState
+    if (buffer && buffer.length > 0) {
+      const lastReadingRaw = buffer[buffer.length - 1];
+      if (!pausedRef.current && lastReadingRaw) {
+        try {
+          const incoming = normalizeIncomingReading(lastReadingRaw);
+          // Add to pending batch instead of immediate update
+          pendingUpdatesRef.current.push(incoming);
+        } catch (e) {
+          // If normalization fails, still try to push raw object conservatively and log the error
+          logger.error('Failed to normalize incoming realtime message', e, lastReadingRaw);
+          const sensorId = lastReadingRaw.sensorId ?? lastReadingRaw.idSensor ?? lastReadingRaw.sensor_id ?? String(lastReadingRaw.id ?? 'default');
+          pendingUpdatesRef.current.push({ ...lastReadingRaw, sensorId });
         }
       }
     }
