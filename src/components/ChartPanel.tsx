@@ -164,12 +164,18 @@ const ChartPanelComponent: React.FC<ChartPanelProps> = ({
     <View style={styles.cardStyle}>
       {showLabel && <Text style={styles.labelTextStyle}>{LABELS[keyName] || keyName}</Text>}
       <LineChart
-        data={{ labels: decimatedData.labels, datasets: [{ data: decimatedData.values, color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`, strokeWidth: 3 }] }}
+        data={{ 
+          labels: decimatedData.labels, 
+          datasets: [{ 
+            data: decimatedData.values,
+            // Remover configurações de cor aqui, deixar o chartConfig controlar
+          }] 
+        }}
         width={screenWidth}
         height={height}
         chartConfig={chartConfig ?? getChartPanelConfig()}
         bezier
-        withShadow={!disableGradient}
+        withShadow={!disableGradient}  // Importante para o gradiente aparecer
         withDots={true}
         withInnerLines={false}
         withOuterLines={false}
@@ -178,7 +184,10 @@ const ChartPanelComponent: React.FC<ChartPanelProps> = ({
         withVerticalLabels={!!showAxisLabels}
         segments={3}
         fromZero={false}
-        style={{ borderRadius: 8 }}
+        style={{ 
+          marginVertical: 8,
+          borderRadius: 16,
+        }}
       />
     </View>
   );

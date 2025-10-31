@@ -227,7 +227,7 @@ export const SensorDetailScreen = () => {
               height={chartHeight}
               chartWidth={chartWidth}
               showAxisLabels={true}
-              chartConfig={getSensorDetailChartConfig(chartFontSize)}
+              chartConfig={getSensorDetailChartConfig(chartFontSize)} 
             />
           ) : hasEnoughDataForChart ? (
             <ChartPanel

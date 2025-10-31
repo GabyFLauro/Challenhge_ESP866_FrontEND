@@ -119,15 +119,14 @@ export const getSensorDetailChartConfig = (fontSize: number): any => {
     backgroundColor: '#1C1C1E',
     backgroundGradientFrom: '#1C1C1E',
     backgroundGradientTo: '#1C1C1E',
-    // Forçar preenchimento em cyan
+    // Configurações de gradiente mais explícitas para garantir visibilidade
     fillShadowGradient: '#66fcf1',
     fillShadowGradientFrom: '#66fcf1',
-    fillShadowGradientFromOpacity: 1,
+    fillShadowGradientFromOpacity: 0.8, // Aumentar opacidade inicial
     fillShadowGradientTo: '#66fcf1',
-  // Igual ao ChartPanel para consistência visual
-  fillShadowGradientToOpacity: 0.35,
-  // Forçar uso do gradiente declarado (não buscar cor do dataset)
-  useShadowColorFromDataset: false,
+    fillShadowGradientToOpacity: 0.1, // Diminuir opacidade final para mais contraste
+    // Forçar uso do gradiente declarado (não buscar cor do dataset)
+    useShadowColorFromDataset: false,
     color: (opacity = 1) => `rgba(102, 252, 241, ${opacity})`,
     labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
     strokeWidth: 3,
