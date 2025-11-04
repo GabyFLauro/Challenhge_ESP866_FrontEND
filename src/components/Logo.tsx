@@ -21,9 +21,9 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   circleContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 75,
+    height: 75,
+    borderRadius: 37.5,
     backgroundColor: '#1C1C1E',
     justifyContent: 'center',
     alignItems: 'center',
@@ -39,8 +39,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   logo: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 62.5,
+    height: 62.5,
+    borderRadius: 31.25,
   },
 }); 

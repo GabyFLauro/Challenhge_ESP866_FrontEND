@@ -106,5 +106,9 @@ Scripts úteis (conforme `package.json`):
 - `npm run ios` — inicia o Expo e abre no iOS
 - `npm run web` — inicia a versão web
 
+-- Para abrir o a tela do google com o app, para ocultar o barra do google
+ /Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --app=http://localhost:8081 
 
+-- Para abrir o a tela do google com o collab, para ocultar o barra do google 
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome --app=https://colab.research.google.com/drive/1MLkSr8UYJf8SakAIG9MDwJK1qV3L4t7V
 
