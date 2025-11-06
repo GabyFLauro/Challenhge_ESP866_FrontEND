@@ -1,13 +1,22 @@
 import React from 'react';
-import { View, Image, StyleSheet } from 'react-native';
+import { View, Image, StyleSheet, ViewStyle } from 'react-native';
 
-export const Logo = () => {
+type LogoProps = {
+  size?: number; // diameter of the circular container
+  style?: ViewStyle; // overrides for outer container
+  circleStyle?: ViewStyle; // overrides for circle container
+};
+
+export const Logo: React.FC<LogoProps> = ({ size = 75, style, circleStyle }) => {
+  const logoInnerRatio = 62.5 / 75; // original inner logo size ratio
+  const innerSize = size * logoInnerRatio;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.circleContainer}>
+    <View style={[styles.container, style]}>
+      <View style={[styles.circleContainer, { width: size, height: size, borderRadius: size / 2 }, circleStyle]}>
         <Image
           source={require('../../assets/logo.png')}
-          style={styles.logo}
+          style={[styles.logo, { width: innerSize, height: innerSize, borderRadius: innerSize / 2 }]}
           resizeMode="contain"
         />
       </View>

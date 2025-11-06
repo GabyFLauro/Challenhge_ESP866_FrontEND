@@ -3,6 +3,7 @@ import { View, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'reac
 import { Text } from 'react-native-elements';
 import { useSensorStream } from '../../hooks/useSensorStream';
 import ChartPanel from '../../components/ChartPanel';
+import { Logo } from '../../components/Logo';
 import { AVAILABLE_UI_KEYS, parseReadingValue, KEY_TO_SENSOR_ID } from '../../utils/sensors';
 import AnimatedButton from '../../components/AnimatedButton';
 // import { useLoading } from '../../contexts/LoadingContext';
@@ -46,8 +47,13 @@ export const DashboardRealtime = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text h4 style={styles.title}>Dashboard Realtime</Text>
-        <Text style={styles.subtitle}>Status: {status} {paused ? '(Pausado)' : ''}</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text h4 style={styles.title}>Dashboard Realtime</Text>
+            <Text style={styles.subtitle}>Status: {status} {paused ? '(Pausado)' : ''}</Text>
+          </View>
+          <Logo size={64} />
+        </View>
         {metrics && <Text style={styles.subtitle}>Leituras: {metrics.total} • RPS: {metrics.rps}</Text>}
       </View>
 
@@ -94,6 +100,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1C1E',
     borderBottomColor: '#2C2C2E',
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
+    paddingRight: 8,
   },
   title: {
     color: '#FFFFFF',
