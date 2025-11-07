@@ -7,8 +7,8 @@ export type SensorInfo = {
 };
 
 export const SENSORS: SensorInfo[] = [
-  { key: 'temperatura_ds18b20', title: 'Temperatura DS18B20', unit: '°C', sensorId: 't1' },
-  { key: 'pressao02_hx710b', uiKey: 'pressao_hx710b', title: 'Pressão HX710B', unit: 'Pa', sensorId: 'p2' },
+  { key: 'temperatura_ds18b20', title: 'Temperatura (DS18B20)', unit: '°C', sensorId: 't1' },
+  { key: 'pressao02_hx710b', uiKey: 'pressao_hx710b', title: 'Pressão (HX710B)', unit: 'Pa', sensorId: 'p2' },
   { key: 'vibracao_vib_x', title: 'Vibração X', unit: 'g', sensorId: 'vx' },
   { key: 'vibracao_vib_y', title: 'Vibração Y', unit: 'g', sensorId: 'vy' },
   { key: 'vibracao_vib_z', title: 'Vibração Z', unit: 'g', sensorId: 'vz' },
